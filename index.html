@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vegan Places Israel</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+</head>
+<body>
+    <header>
+        <h1>🌱 Vegan Places in Israel</h1>
+        <div class="mode-switcher">
+            <button id="listMode" class="mode-btn active">📋 List View</button>
+            <button id="mapMode" class="mode-btn">🗺️ Map View</button>
+        </div>
+    </header>
+
+    <main>
+        <!-- List View -->
+        <div id="listView" class="view-container active">
+            <div class="search-bar">
+                <input type="text" id="searchInput" placeholder="Search vegan places...">
+            </div>
+            <div id="placesList" class="places-list">
+                <!-- Places will be loaded here -->
+            </div>
+        </div>
+
+        <!-- Map View -->
+        <div id="mapView" class="view-container">
+            <div id="map"></div>
+        </div>
+    </main>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>

@@ -10,6 +10,15 @@ body {
     color: #333;
 }
 
+/* RTL Support */
+[dir="rtl"] {
+    text-align: right;
+}
+
+[dir="ltr"] {
+    text-align: left;
+}
+
 header {
     background: linear-gradient(135deg, #4CAF50, #2E7D32);
     color: white;
@@ -17,9 +26,33 @@ header {
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
-header h1 {
+.header-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     margin-bottom: 1rem;
+}
+
+header h1 {
+    margin: 0;
     font-size: 2rem;
+}
+
+.language-btn {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 0.9rem;
+    font-weight: bold;
+}
+
+.language-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+    border-color: rgba(255, 255, 255, 0.5);
 }
 
 .mode-switcher {
@@ -128,6 +161,15 @@ main {
 
 .place-link:hover {
     background: #45a049;
+}
+
+/* Language-specific text alignment */
+[dir="rtl"] .place-card {
+    text-align: right;
+}
+
+[dir="ltr"] .place-card {
+    text-align: left;
 }
 
 /* Map View Styles */

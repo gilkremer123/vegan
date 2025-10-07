@@ -145,14 +145,44 @@ function parseCSV(csvText) {
     for (let i = 1; i < lines.length; i++) {
         const line = lines[i].trim();
         if (line) {
-            // Simple CSV parsing (assumes no commas in quoted fields for this demo)
-            const [name, address, link] = line.split(',').map(field => field.trim().replace(/^"|"$/g, ''));
+            console.log(`🔍 Parsing CSV line: ${line}`);
+            
+            // Better CSV parsing that handles quoted fields with commas
+            const fields = [];
+            let current = '';
+            let inQuotes = false;
+            
+            for (let j = 0; j < line.length; j++) {
+                const char = line[j];
+                
+                if (char === '"') {
+                    inQuotes = !inQuotes;
+                } else if (char === ',' && !inQuotes) {
+                    fields.push(current.trim());
+                    current = '';
+                } else {
+                    current += char;
+                }
+            }
+            // Don't forget the last field
+            fields.push(current.trim());
+            
+            console.log(`📝 Parsed fields:`, fields);
+            
+            // Extract name, address, link and remove quotes
+            const name = fields[0] ? fields[0].replace(/^"|"$/g, '') : '';
+            const address = fields[1] ? fields[1].replace(/^"|"$/g, '') : '';
+            const link = fields[2] ? fields[2].replace(/^"|"$/g, '') : '';
+            
+            console.log(`✅ Final parsed data:`, { name, address, link });
+            
             if (name && address) {
-                places.push({ name, address, link: link || '' });
+                places.push({ name, address, link });
             }
         }
     }
     
+    console.log(`📊 Total places parsed: ${places.length}`);
     return places;
 }
 
@@ -214,14 +244,17 @@ async function addMarkersToMap() {
     markers = [];
     
     const t = translations[currentLanguage];
+    console.log(`🗺️ Adding ${places.length} places to map`);
     
     for (const place of places) {
         try {
+            console.log(`\n🏪 Processing place: ${place.name}`);
             // For demo purposes, we'll use approximate coordinates for Israeli cities
             // In a real app, you'd geocode the addresses or store coordinates in your data
             const coordinates = getApproximateCoordinates(place.address);
             
             if (coordinates) {
+                console.log(`📌 Creating marker at:`, coordinates);
                 const marker = L.marker(coordinates).addTo(map);
                 
                 const popupContent = `
@@ -234,16 +267,37 @@ async function addMarkersToMap() {
                 
                 marker.bindPopup(popupContent);
                 markers.push(marker);
+                console.log(`✅ Added marker for ${place.name}`);
+            } else {
+                console.warn(`⚠️ Skipping marker for ${place.name} - no coordinates found`);
             }
         } catch (error) {
-            console.warn(`Could not add marker for ${place.name}:`, error);
+            console.error(`❌ Error adding marker for ${place.name}:`, error);
         }
+    }
+    
+    console.log(`\n📊 Total markers added: ${markers.length}`);
+    
+    // If we have markers, adjust map view to show all of them
+    if (markers.length > 0) {
+        console.log('🔍 Fitting map bounds to show all markers');
+        try {
+            const group = new L.featureGroup(markers);
+            map.fitBounds(group.getBounds().pad(0.1));
+            console.log('✅ Map bounds fitted successfully');
+        } catch (error) {
+            console.warn('⚠️ Error fitting bounds, using default view:', error);
+            map.setView([31.5, 34.8], 8); // Fallback to default Israel view
+        }
+    } else {
+        console.warn('⚠️ No markers to display - using default map view');
+        map.setView([31.5, 34.8], 8);
     }
 }
 
 // Get approximate coordinates for Israeli locations (for demo purposes)
 function getApproximateCoordinates(address) {
-    const addressLower = address.toLowerCase();
+    const addressLower = address.toLowerCase().trim();
     
     // Simple mapping for demo - in a real app, use a geocoding service
     const locationMap = {
@@ -262,24 +316,56 @@ function getApproximateCoordinates(address) {
         'petah tikva': [32.0878, 34.8873],
         'פתח תקווה': [32.0878, 34.8873],
         'rishon lezion': [31.9730, 34.7925],
-        'ראשון לציון': [31.9730, 34.7925]
+        'ראשון לציון': [31.9730, 34.7925],
+        'amirim': [32.9775, 35.4294], // Added Amirim coordinates
+        'אמירים': [32.9775, 35.4294]
     };
     
+    // Debug: log the address we're trying to geocode
+    console.log('🔍 Geocoding address:', address);
+    console.log('📝 Address lowercase:', addressLower);
+    
     for (const [city, coords] of Object.entries(locationMap)) {
+        console.log(`🔎 Checking if "${addressLower}" includes "${city}"`);
         if (addressLower.includes(city)) {
-            // Add some random offset to avoid overlapping markers
-            return [
-                coords[0] + (Math.random() - 0.5) * 0.02,
-                coords[1] + (Math.random() - 0.5) * 0.02
+            console.log(`✅ Found match for city: ${city}, coords: ${coords}`);
+            // Use much smaller random offset to stay close to actual location
+            const finalCoords = [
+                coords[0] + (Math.random() - 0.5) * 0.005,
+                coords[1] + (Math.random() - 0.5) * 0.005
             ];
+            console.log('📍 Final coordinates:', finalCoords);
+            return finalCoords;
         }
     }
     
-    // Default to center of Israel with random offset if no city match
-    return [
-        31.5 + (Math.random() - 0.5) * 2,
-        34.8 + (Math.random() - 0.5) * 2
-    ];
+    // If no city match found, try a broader search for common Hebrew words
+    const hebrewCityPatterns = {
+        'תל אביב': [32.0853, 34.7818],
+        'ירושלים': [31.7683, 35.2137], 
+        'חיפה': [32.7940, 34.9896],
+        'אמירים': [32.9775, 35.4294]
+    };
+    
+    console.log('🔍 Trying Hebrew pattern matching...');
+    for (const [pattern, coords] of Object.entries(hebrewCityPatterns)) {
+        console.log(`🔎 Checking if "${address}" includes "${pattern}"`);
+        if (address.includes(pattern)) {
+            console.log(`✅ Found Hebrew pattern match: ${pattern}, coords: ${coords}`);
+            const finalCoords = [
+                coords[0] + (Math.random() - 0.5) * 0.005,
+                coords[1] + (Math.random() - 0.5) * 0.005
+            ];
+            console.log('📍 Final coordinates:', finalCoords);
+            return finalCoords;
+        }
+    }
+    
+    // If still no match found, log warning and return a default location for now
+    console.warn(`❌ No coordinates found for address: ${address}`);
+    console.warn('🔄 Using Tel Aviv as fallback location');
+    // Return Tel Aviv center as fallback instead of null for testing
+    return [32.0853, 34.7818];
 }
 
 // Utility function to escape HTML

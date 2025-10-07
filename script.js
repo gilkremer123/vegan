@@ -7,7 +7,7 @@ let currentLanguage = 'he'; // Default to Hebrew
 // Language translations
 const translations = {
     he: {
-        title: '🌱 מקומות 100% טבעוניים בישראל',
+        title: '🌱 מקומות טבעוניים בישראל',
         listView: '📋 תצוגת רשימה',
         mapView: '🗺️ תצוגת מפה',
         searchPlaceholder: 'חפש מקומות טבעוניים...',
@@ -17,7 +17,7 @@ const translations = {
         loadError: 'שגיאה בטעינת המקומות הטבעוניים. אנא נסה שוב מאוחר יותר.'
     },
     en: {
-        title: '🌱 100% Vegan Places in Israel',
+        title: '🌱 Vegan Places in Israel',
         listView: '📋 List View',
         mapView: '🗺️ Map View',
         searchPlaceholder: 'Search vegan places...',

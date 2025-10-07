@@ -117,22 +117,55 @@ main {
 }
 
 .places-list {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+/* City Group Styles */
+.city-group {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    overflow: hidden;
+}
+
+.city-header {
+    background: linear-gradient(135deg, #4CAF50, #45a049);
+    color: white;
+    padding: 1rem 1.5rem;
+    margin: 0;
+    font-size: 1.3rem;
+    font-weight: 600;
+}
+
+[dir="rtl"] .city-header {
+    text-align: right;
+}
+
+[dir="ltr"] .city-header {
+    text-align: left;
+}
+
+.city-places {
     display: grid;
     gap: 1rem;
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    padding: 1.5rem;
 }
 
 .place-card {
-    background: white;
+    background: #f8f9fa;
     padding: 1.5rem;
-    border-radius: 12px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
     transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .place-card:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    background: white;
 }
 
 .place-name {
@@ -198,8 +231,14 @@ main {
         flex-direction: column;
     }
     
-    .places-list {
+    .city-places {
         grid-template-columns: 1fr;
+        padding: 1rem;
+    }
+    
+    .city-header {
+        font-size: 1.1rem;
+        padding: 0.75rem 1rem;
     }
     
     #map {

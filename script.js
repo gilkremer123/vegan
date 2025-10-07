@@ -195,15 +195,95 @@ function displayPlaces(placesToDisplay) {
         return;
     }
     
-    const placesHTML = placesToDisplay.map(place => `
-        <div class="place-card">
-            <div class="place-name">${escapeHtml(place.name)}</div>
-            <div class="place-address">${escapeHtml(place.address)}</div>
-            ${place.link ? `<a href="${escapeHtml(place.link)}" target="_blank" class="place-link">${t.visitWebsite}</a>` : ''}
-        </div>
-    `).join('');
+    // Group places by city
+    const placesByCity = groupPlacesByCity(placesToDisplay);
+    
+    let placesHTML = '';
+    
+    // Sort cities alphabetically
+    const sortedCities = Object.keys(placesByCity).sort();
+    
+    sortedCities.forEach(city => {
+        const cityPlaces = placesByCity[city];
+        
+        placesHTML += `
+            <div class="city-group">
+                <h2 class="city-header">${escapeHtml(city)} (${cityPlaces.length})</h2>
+                <div class="city-places">
+                    ${cityPlaces.map(place => `
+                        <div class="place-card">
+                            <div class="place-name">${escapeHtml(place.name)}</div>
+                            <div class="place-address">${escapeHtml(place.address)}</div>
+                            ${place.link ? `<a href="${escapeHtml(place.link)}" target="_blank" class="place-link">${t.visitWebsite}</a>` : ''}
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        `;
+    });
     
     placesList.innerHTML = placesHTML;
+}
+
+// Group places by city name extracted from address
+function groupPlacesByCity(places) {
+    const cityGroups = {};
+    
+    places.forEach(place => {
+        const city = extractCityFromAddress(place.address);
+        
+        if (!cityGroups[city]) {
+            cityGroups[city] = [];
+        }
+        cityGroups[city].push(place);
+    });
+    
+    return cityGroups;
+}
+
+// Extract city name from address
+function extractCityFromAddress(address) {
+    const addressLower = address.toLowerCase().trim();
+    
+    // City mapping for extraction
+    const cityMap = {
+        'tel aviv': currentLanguage === 'he' ? 'תל אביב' : 'Tel Aviv',
+        'תל אביב': currentLanguage === 'he' ? 'תל אביב' : 'Tel Aviv',
+        'jerusalem': currentLanguage === 'he' ? 'ירושלים' : 'Jerusalem',
+        'ירושלים': currentLanguage === 'he' ? 'ירושלים' : 'Jerusalem',
+        'haifa': currentLanguage === 'he' ? 'חיפה' : 'Haifa',
+        'חיפה': currentLanguage === 'he' ? 'חיפה' : 'Haifa',
+        'beer sheva': currentLanguage === 'he' ? 'באר שבע' : 'Beer Sheva',
+        'באר שבע': currentLanguage === 'he' ? 'באר שבע' : 'Beer Sheva',
+        'netanya': currentLanguage === 'he' ? 'נתניה' : 'Netanya',
+        'נתניה': currentLanguage === 'he' ? 'נתניה' : 'Netanya',
+        'ashdod': currentLanguage === 'he' ? 'אשדוד' : 'Ashdod',
+        'אשדוד': currentLanguage === 'he' ? 'אשדוד' : 'Ashdod',
+        'petah tikva': currentLanguage === 'he' ? 'פתח תקווה' : 'Petah Tikva',
+        'פתח תקווה': currentLanguage === 'he' ? 'פתח תקווה' : 'Petah Tikva',
+        'rishon lezion': currentLanguage === 'he' ? 'ראשון לציון' : 'Rishon LeZion',
+        'ראשון לציון': currentLanguage === 'he' ? 'ראשון לציון' : 'Rishon LeZion',
+        'amirim': currentLanguage === 'he' ? 'אמירים' : 'Amirim',
+        'אמירים': currentLanguage === 'he' ? 'אמירים' : 'Amirim',
+        'givat hashloshha': currentLanguage === 'he' ? 'גבעת השלושה' : 'Givat HaShloshha',
+        'גבעת השלושה': currentLanguage === 'he' ? 'גבעת השלושה' : 'Givat HaShloshha'
+    };
+    
+    // Check for exact city matches in address
+    for (const [cityKey, displayName] of Object.entries(cityMap)) {
+        if (addressLower.includes(cityKey) || address.includes(cityKey)) {
+            return displayName;
+        }
+    }
+    
+    // Fallback: return the last part of the address (likely the city)
+    const parts = address.split(',');
+    if (parts.length > 1) {
+        return parts[parts.length - 1].trim();
+    }
+    
+    // If it's a single word/phrase (like "גבעת השלושה"), treat it as the city name
+    return address.trim();
 }
 
 // Filter places based on search input
@@ -317,24 +397,33 @@ function getApproximateCoordinates(address) {
         'פתח תקווה': [32.0878, 34.8873],
         'rishon lezion': [31.9730, 34.7925],
         'ראשון לציון': [31.9730, 34.7925],
-        'amirim': [32.9775, 35.4294], // Added Amirim coordinates
-        'אמירים': [32.9775, 35.4294]
+        'amirim': [32.9775, 35.4294],
+        'אמירים': [32.9775, 35.4294],
+        'givat hashloshha': [32.0542, 34.9208], // Added Givat HaShloshha
+        'גבעת השלושה': [32.0542, 34.9208]
     };
     
     // Debug: log the address we're trying to geocode
     console.log('🔍 Geocoding address:', address);
     console.log('📝 Address lowercase:', addressLower);
     
+    // Check if this is a city-only address (no street number or name)
+    const isCityOnly = !address.match(/\d+/) && !address.includes(',');
+    console.log('🏙️ City-only address detected:', isCityOnly);
+    
     for (const [city, coords] of Object.entries(locationMap)) {
         console.log(`🔎 Checking if "${addressLower}" includes "${city}"`);
         if (addressLower.includes(city)) {
             console.log(`✅ Found match for city: ${city}, coords: ${coords}`);
-            // Use much smaller random offset to stay close to actual location
+            
+            // For city-only addresses, use a larger random offset to simulate being "somewhere in the city"
+            const offset = isCityOnly ? 0.02 : 0.005; // Larger offset for city-only
             const finalCoords = [
-                coords[0] + (Math.random() - 0.5) * 0.005,
-                coords[1] + (Math.random() - 0.5) * 0.005
+                coords[0] + (Math.random() - 0.5) * offset,
+                coords[1] + (Math.random() - 0.5) * offset
             ];
             console.log('📍 Final coordinates:', finalCoords);
+            console.log(`🎯 Used ${isCityOnly ? 'city-wide' : 'street-level'} positioning`);
             return finalCoords;
         }
     }
@@ -344,7 +433,8 @@ function getApproximateCoordinates(address) {
         'תל אביב': [32.0853, 34.7818],
         'ירושלים': [31.7683, 35.2137], 
         'חיפה': [32.7940, 34.9896],
-        'אמירים': [32.9775, 35.4294]
+        'אמירים': [32.9775, 35.4294],
+        'גבעת השלושה': [32.0542, 34.9208]
     };
     
     console.log('🔍 Trying Hebrew pattern matching...');
@@ -352,11 +442,15 @@ function getApproximateCoordinates(address) {
         console.log(`🔎 Checking if "${address}" includes "${pattern}"`);
         if (address.includes(pattern)) {
             console.log(`✅ Found Hebrew pattern match: ${pattern}, coords: ${coords}`);
+            
+            // For city-only addresses, use a larger random offset
+            const offset = isCityOnly ? 0.02 : 0.005;
             const finalCoords = [
-                coords[0] + (Math.random() - 0.5) * 0.005,
-                coords[1] + (Math.random() - 0.5) * 0.005
+                coords[0] + (Math.random() - 0.5) * offset,
+                coords[1] + (Math.random() - 0.5) * offset
             ];
             console.log('📍 Final coordinates:', finalCoords);
+            console.log(`🎯 Used ${isCityOnly ? 'city-wide' : 'street-level'} positioning`);
             return finalCoords;
         }
     }

@@ -99,11 +99,15 @@ main {
 /* List View Styles */
 .search-bar {
     margin-bottom: 1.5rem;
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    flex-wrap: wrap;
 }
 
 #searchInput {
-    width: 100%;
-    max-width: 400px;
+    flex: 1;
+    min-width: 250px;
     padding: 0.75rem;
     border: 2px solid #ddd;
     border-radius: 8px;
@@ -114,6 +118,22 @@ main {
 #searchInput:focus {
     outline: none;
     border-color: #4CAF50;
+}
+
+.toggle-all-btn {
+    background: #2196F3;
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    white-space: nowrap;
+}
+
+.toggle-all-btn:hover {
+    background: #1976D2;
 }
 
 .places-list {
@@ -137,6 +157,38 @@ main {
     margin: 0;
     font-size: 1.3rem;
     font-weight: 600;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.city-title {
+    flex: 1;
+}
+
+.city-toggle-btn {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    border: none;
+    padding: 0.5rem 0.75rem;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    font-size: 1.2rem;
+    font-weight: bold;
+    width: 2.5rem;
+    height: 2.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.city-toggle-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.toggle-icon {
+    line-height: 1;
 }
 
 [dir="rtl"] .city-header {
@@ -152,6 +204,21 @@ main {
     gap: 1rem;
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
     padding: 1.5rem;
+    transition: all 0.3s ease;
+    overflow: hidden;
+}
+
+/* Expand/Collapse States */
+.city-group.expanded .city-places {
+    max-height: none;
+    opacity: 1;
+    padding: 1.5rem;
+}
+
+.city-group.collapsed .city-places {
+    max-height: 0;
+    opacity: 0;
+    padding: 0 1.5rem;
 }
 
 .place-card {
@@ -231,14 +298,33 @@ main {
         flex-direction: column;
     }
     
+    .search-bar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    #searchInput {
+        min-width: auto;
+    }
+    
     .city-places {
         grid-template-columns: 1fr;
+        padding: 1rem;
+    }
+    
+    .city-group.expanded .city-places {
         padding: 1rem;
     }
     
     .city-header {
         font-size: 1.1rem;
         padding: 0.75rem 1rem;
+    }
+    
+    .city-toggle-btn {
+        width: 2rem;
+        height: 2rem;
+        font-size: 1rem;
     }
     
     #map {

@@ -3,6 +3,7 @@ let places = [];
 let map;
 let markers = [];
 let currentLanguage = 'he'; // Default to Hebrew
+let allExpanded = true; // Track global expand/collapse state
 
 // Language translations
 const translations = {
@@ -15,7 +16,9 @@ const translations = {
         loading: 'טוען מקומות טבעוניים...',
         noPlacesFound: 'לא נמצאו מקומות טבעוניים התואמים לחיפוש.',
         loadError: 'שגיאה בטעינת המקומות הטבעוניים. אנא נסה שוב מאוחר יותר.',
-        contactText: 'שכחתי מקום? צריך לתקן משהו? צור קשר כאן'
+        contactText: 'שכחתי מקום? צריך לתקן משהו? צור קשר כאן',
+        expandAll: 'הרחב הכל',
+        collapseAll: 'צמצם הכל'
     },
     en: {
         title: '🌱 Vegan Places in Israel',
@@ -26,7 +29,9 @@ const translations = {
         loading: 'Loading vegan places...',
         noPlacesFound: 'No vegan places found matching your search.',
         loadError: 'Failed to load vegan places. Please try again later.',
-        contactText: 'Forgot a place? Need to fix something? Contact us here'
+        contactText: 'Forgot a place? Need to fix something? Contact us here',
+        expandAll: 'Expand All',
+        collapseAll: 'Collapse All'
     }
 };
 
@@ -39,6 +44,7 @@ const placesList = document.getElementById('placesList');
 const searchInput = document.getElementById('searchInput');
 const languageToggle = document.getElementById('languageToggle');
 const contactBtn = document.getElementById('contactBtn');
+const toggleAllBtn = document.getElementById('toggleAllBtn');
 
 // Initialize the application
 document.addEventListener('DOMContentLoaded', function() {
@@ -54,6 +60,7 @@ function setupEventListeners() {
     searchInput.addEventListener('input', filterPlaces);
     languageToggle.addEventListener('click', toggleLanguage);
     contactBtn.addEventListener('click', openContactEmail);
+    toggleAllBtn.addEventListener('click', toggleAllCategories);
 }
 
 // Open contact email
@@ -96,6 +103,9 @@ function updateLanguage() {
     
     // Update toggle button text
     languageToggle.textContent = currentLanguage === 'he' ? 'EN' : 'עב';
+    
+    // Update toggle all button text
+    toggleAllBtn.textContent = allExpanded ? t.collapseAll : t.expandAll;
     
     // Update elements with data-key attributes
     document.querySelectorAll('[data-key]').forEach(element => {
@@ -223,15 +233,24 @@ function displayPlaces(placesToDisplay) {
     
     sortedCities.forEach(city => {
         const cityPlaces = placesByCity[city];
+        const cityId = `city-${city.replace(/\s+/g, '-').replace(/[^\w\-]/g, '')}`;
+        const isExpanded = allExpanded ? 'expanded' : 'collapsed';
         
         placesHTML += `
-            <div class="city-group">
-                <h2 class="city-header">${escapeHtml(city)} (${cityPlaces.length})</h2>
-                <div class="city-places">
+            <div class="city-group ${isExpanded}">
+                <div class="city-header">
+                    <span class="city-title">${escapeHtml(city)} (${cityPlaces.length})</span>
+                    <button class="city-toggle-btn" onclick="toggleCity('${cityId}')">
+                        <span class="toggle-icon">${allExpanded ? '−' : '+'}</span>
+                    </button>
+                </div>
+                <div class="city-places" id="${cityId}">
                     ${cityPlaces.map(place => `
                         <div class="place-card">
-                            <div class="place-name">${escapeHtml(place.name)}</div>
-                            <div class="place-address">${escapeHtml(place.address)}</div>
+                            <div class="place-info">
+                                <div class="place-name">${escapeHtml(place.name)}</div>
+                                <div class="place-address">${escapeHtml(place.address)}</div>
+                            </div>
                             ${place.link ? `<a href="${escapeHtml(place.link)}" target="_blank" class="place-link">${t.visitWebsite}</a>` : ''}
                         </div>
                     `).join('')}
@@ -495,4 +514,46 @@ function escapeHtml(text) {
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
+}
+
+// Toggle individual city expand/collapse
+function toggleCity(cityId) {
+    const cityElement = document.getElementById(cityId);
+    const cityGroup = cityElement.parentElement;
+    const toggleIcon = cityGroup.querySelector('.toggle-icon');
+    
+    if (cityGroup.classList.contains('expanded')) {
+        cityGroup.classList.remove('expanded');
+        cityGroup.classList.add('collapsed');
+        toggleIcon.textContent = '+';
+    } else {
+        cityGroup.classList.remove('collapsed');
+        cityGroup.classList.add('expanded');
+        toggleIcon.textContent = '−';
+    }
+}
+
+// Toggle all categories expand/collapse
+function toggleAllCategories() {
+    const t = translations[currentLanguage];
+    const cityGroups = document.querySelectorAll('.city-group');
+    
+    allExpanded = !allExpanded;
+    
+    cityGroups.forEach(group => {
+        const toggleIcon = group.querySelector('.toggle-icon');
+        
+        if (allExpanded) {
+            group.classList.remove('collapsed');
+            group.classList.add('expanded');
+            toggleIcon.textContent = '−';
+        } else {
+            group.classList.remove('expanded');
+            group.classList.add('collapsed');
+            toggleIcon.textContent = '+';
+        }
+    });
+    
+    // Update the toggle all button text
+    toggleAllBtn.textContent = allExpanded ? t.collapseAll : t.expandAll;
 }

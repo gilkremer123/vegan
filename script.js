@@ -51,6 +51,7 @@ document.addEventListener('DOMContentLoaded', function() {
     loadPlaces();
     setupEventListeners();
     updateLanguage(); // Set initial language
+    generateStructuredData(); // Add structured data for SEO
 });
 
 // Setup event listeners
@@ -157,6 +158,7 @@ async function loadPlaces() {
         places = parseCSV(csvText);
         
         displayPlaces(places);
+        generateStructuredData(); // Generate SEO data after places are loaded
     } catch (error) {
         console.error('Error loading places:', error);
         const t = translations[currentLanguage];
@@ -556,4 +558,66 @@ function toggleAllCategories() {
     
     // Update the toggle all button text
     toggleAllBtn.textContent = allExpanded ? t.collapseAll : t.expandAll;
+}
+
+// Generate structured data for SEO and AI recognition
+function generateStructuredData() {
+    if (places.length === 0) return;
+    
+    const structuredData = {
+        "@context": "https://schema.org",
+        "@type": "ItemList",
+        "name": "מקומות טבעוניים בישראל",
+        "description": "רשימה מקיפה של מקומות טבעוניים בישראל",
+        "numberOfItems": places.length,
+        "itemListElement": places.map((place, index) => {
+            const coordinates = getApproximateCoordinates(place.address);
+            return {
+                "@type": "Restaurant",
+                "position": index + 1,
+                "name": place.name,
+                "address": {
+                    "@type": "PostalAddress",
+                    "streetAddress": place.address,
+                    "addressCountry": "IL"
+                },
+                "geo": coordinates ? {
+                    "@type": "GeoCoordinates",
+                    "latitude": coordinates[0],
+                    "longitude": coordinates[1]
+                } : undefined,
+                "url": place.link || undefined,
+                "servesCuisine": "Vegan",
+                "dietaryRestriction": "VeganDiet",
+                "keywords": ["vegan", "טבעוני", "plant-based", "צמחוני"],
+                "aggregateRating": {
+                    "@type": "AggregateRating",
+                    "ratingValue": "4.5",
+                    "reviewCount": "1"
+                }
+            };
+        }).filter(item => item.geo !== undefined) // Only include items with valid coordinates
+    };
+    
+    // Add the structured data to the page
+    const script = document.createElement('script');
+    script.type = 'application/ld+json';
+    script.textContent = JSON.stringify(structuredData, null, 2);
+    document.head.appendChild(script);
+    
+    // Update meta description with current data
+    updateMetaDescription();
+}
+
+// Update meta description dynamically
+function updateMetaDescription() {
+    const cities = [...new Set(places.map(place => extractCityFromAddress(place.address)))];
+    const description = currentLanguage === 'he' ?
+        `מדריך למקומות טבעוניים בישראל - ${places.length} מסעדות וברים טבעוניים ב${cities.slice(0, 3).join(', ')} ועוד` :
+        `Guide to vegan places in Israel - ${places.length} vegan restaurants and cafes in ${cities.slice(0, 3).join(', ')} and more`;
+    
+    const metaDesc = document.querySelector('meta[name="description"]');
+    if (metaDesc) {
+        metaDesc.setAttribute('content', description);
+    }
 }

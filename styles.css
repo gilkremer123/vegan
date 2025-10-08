@@ -261,3 +261,41 @@ main {
     border-radius: 8px;
     margin: 1rem 0;
 }
+
+/* Footer and Contact Button */
+footer {
+    margin-top: 3rem;
+    padding: 2rem;
+    background: #f5f7fa;
+    border-top: 1px solid #e9ecef;
+}
+
+.contact-section {
+    max-width: 1200px;
+    margin: 0 auto;
+    text-align: center;
+}
+
+.contact-btn {
+    background: linear-gradient(135deg, #FF9800, #F57C00);
+    color: white;
+    border: none;
+    padding: 1rem 2rem;
+    border-radius: 12px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(255, 152, 0, 0.3);
+    line-height: 1.4;
+}
+
+.contact-btn:hover {
+    background: linear-gradient(135deg, #F57C00, #E65100);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(255, 152, 0, 0.4);
+}
+
+[dir="rtl"] .contact-btn {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}

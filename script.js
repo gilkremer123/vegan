@@ -14,7 +14,8 @@ const translations = {
         visitWebsite: 'בקר באתר',
         loading: 'טוען מקומות טבעוניים...',
         noPlacesFound: 'לא נמצאו מקומות טבעוניים התואמים לחיפוש.',
-        loadError: 'שגיאה בטעינת המקומות הטבעוניים. אנא נסה שוב מאוחר יותר.'
+        loadError: 'שגיאה בטעינת המקומות הטבעוניים. אנא נסה שוב מאוחר יותר.',
+        contactText: 'שכחתי מקום? צריך לתקן משהו? צור קשר כאן'
     },
     en: {
         title: '🌱 Vegan Places in Israel',
@@ -24,7 +25,8 @@ const translations = {
         visitWebsite: 'Visit Website',
         loading: 'Loading vegan places...',
         noPlacesFound: 'No vegan places found matching your search.',
-        loadError: 'Failed to load vegan places. Please try again later.'
+        loadError: 'Failed to load vegan places. Please try again later.',
+        contactText: 'Forgot a place? Need to fix something? Contact us here'
     }
 };
 
@@ -36,6 +38,7 @@ const mapView = document.getElementById('mapView');
 const placesList = document.getElementById('placesList');
 const searchInput = document.getElementById('searchInput');
 const languageToggle = document.getElementById('languageToggle');
+const contactBtn = document.getElementById('contactBtn');
 
 // Initialize the application
 document.addEventListener('DOMContentLoaded', function() {
@@ -50,6 +53,21 @@ function setupEventListeners() {
     mapModeBtn.addEventListener('click', () => switchMode('map'));
     searchInput.addEventListener('input', filterPlaces);
     languageToggle.addEventListener('click', toggleLanguage);
+    contactBtn.addEventListener('click', openContactEmail);
+}
+
+// Open contact email
+function openContactEmail() {
+    const subject = currentLanguage === 'he' ? 
+        'מקומות טבעוניים בישראל - הצעה/תיקון' : 
+        'Vegan Places in Israel - Suggestion/Correction';
+    
+    const body = currentLanguage === 'he' ? 
+        'שלום,\n\nאני רוצה להציע מקום טבעוני חדש או לתקן פרט קיים:\n\n' :
+        'Hello,\n\nI would like to suggest a new vegan place or correct an existing detail:\n\n';
+    
+    const mailtoLink = `mailto:kremerint@gmail.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    window.open(mailtoLink);
 }
 
 // Toggle language between Hebrew and English
@@ -266,7 +284,11 @@ function extractCityFromAddress(address) {
         'amirim': currentLanguage === 'he' ? 'אמירים' : 'Amirim',
         'אמירים': currentLanguage === 'he' ? 'אמירים' : 'Amirim',
         'givat hashloshha': currentLanguage === 'he' ? 'גבעת השלושה' : 'Givat HaShloshha',
-        'גבעת השלושה': currentLanguage === 'he' ? 'גבעת השלושה' : 'Givat HaShloshha'
+        'גבעת השלושה': currentLanguage === 'he' ? 'גבעת השלושה' : 'Givat HaShloshha',
+        'kfar saba': currentLanguage === 'he' ? 'כפר סבא' : 'Kfar Saba',
+        'כפר סבא': currentLanguage === 'he' ? 'כפר סבא' : 'Kfar Saba',
+        'nir yafe': currentLanguage === 'he' ? 'ניר יפה' : 'Nir Yafe',
+        'ניר יפה': currentLanguage === 'he' ? 'ניר יפה' : 'Nir Yafe'
     };
     
     // Check for exact city matches in address
@@ -400,7 +422,11 @@ function getApproximateCoordinates(address) {
         'amirim': [32.9775, 35.4294],
         'אמירים': [32.9775, 35.4294],
         'givat hashloshha': [32.0542, 34.9208], // Added Givat HaShloshha
-        'גבעת השלושה': [32.0542, 34.9208]
+        'גבעת השלושה': [32.0542, 34.9208],
+        'kfar saba': [32.1747, 34.9049], // Added Kfar Saba
+        'כפר סבא': [32.1747, 34.9049],
+        'nir yafe': [32.5333, 34.9833], // Added Nir Yafe
+        'ניר יפה': [32.5333, 34.9833]
     };
     
     // Debug: log the address we're trying to geocode
@@ -434,7 +460,9 @@ function getApproximateCoordinates(address) {
         'ירושלים': [31.7683, 35.2137], 
         'חיפה': [32.7940, 34.9896],
         'אמירים': [32.9775, 35.4294],
-        'גבעת השלושה': [32.0542, 34.9208]
+        'גבעת השלושה': [32.0542, 34.9208],
+        'כפר סבא': [32.1747, 34.9049],
+        'ניר יפה': [32.5333, 34.9833]
     };
     
     console.log('🔍 Trying Hebrew pattern matching...');

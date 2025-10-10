@@ -233,9 +233,9 @@ function displayPlaces(placesToDisplay) {
     // Sort cities alphabetically
     const sortedCities = Object.keys(placesByCity).sort();
     
-    sortedCities.forEach(city => {
+    sortedCities.forEach((city, index) => {
         const cityPlaces = placesByCity[city];
-        const cityId = `city-${city.replace(/\s+/g, '-').replace(/[^\w\-]/g, '')}`;
+        const cityId = `city-${index}-${city.replace(/\s+/g, '-').replace(/[^\w\-א-ת]/g, '')}`; // Better ID generation with index
         const isExpanded = allExpanded ? 'expanded' : 'collapsed';
         
         placesHTML += `

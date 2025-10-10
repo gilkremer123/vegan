@@ -357,14 +357,15 @@ main {
     }
     
     .button-row {
-        flex-direction: column;
+        flex-direction: row; /* Keep buttons on same line */
         gap: 0.5rem;
     }
     
     .toggle-all-btn,
     .button-row .contact-btn {
-        flex: none; /* Remove flex ratios on mobile */
-        width: 100%;
+        /* Keep the flex ratios on mobile too */
+        font-size: 0.8rem; /* Slightly smaller text on mobile */
+        padding: 0.6rem 1rem; /* Slightly smaller padding */
     }
     
     #searchInput {

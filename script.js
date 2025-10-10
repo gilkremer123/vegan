@@ -3,7 +3,7 @@ let places = [];
 let map;
 let markers = [];
 let currentLanguage = 'he'; // Default to Hebrew
-let allExpanded = true; // Track global expand/collapse state
+let allExpanded = false; // Track global expand/collapse state - start collapsed
 
 // Language translations
 const translations = {
@@ -212,15 +212,16 @@ function parseCSV(csvText) {
             
             console.log(`📝 Parsed fields:`, fields);
             
-            // Extract name, address, link and remove quotes
+            // Extract name, address, link, region and remove quotes
             const name = fields[0] ? fields[0].replace(/^"|"$/g, '') : '';
             const address = fields[1] ? fields[1].replace(/^"|"$/g, '') : '';
             const link = fields[2] ? fields[2].replace(/^"|"$/g, '') : '';
+            const region = fields[3] ? fields[3].replace(/^"|"$/g, '') : (currentLanguage === 'he' ? 'כללי' : 'General');
             
-            console.log(`✅ Final parsed data:`, { name, address, link });
+            console.log(`✅ Final parsed data:`, { name, address, link, region });
             
             if (name && address) {
-                places.push({ name, address, link });
+                places.push({ name, address, link, region });
             }
         }
     }
@@ -238,43 +239,89 @@ function displayPlaces(placesToDisplay) {
         return;
     }
     
-    // Group places by city
-    const placesByCity = groupPlacesByCity(placesToDisplay);
+    // Group places by region first, then by city
+    const placesByRegion = groupPlacesByRegion(placesToDisplay);
     
     let placesHTML = '';
     
-    // Sort cities alphabetically
-    const sortedCities = Object.keys(placesByCity).sort();
+    // Sort regions by number of places (descending order)
+    const sortedRegions = Object.keys(placesByRegion).sort((a, b) => {
+        return placesByRegion[b].length - placesByRegion[a].length;
+    });
     
-    sortedCities.forEach((city, index) => {
-        const cityPlaces = placesByCity[city];
-        const cityId = `city-${index}-${city.replace(/\s+/g, '-').replace(/[^\w\-א-ת]/g, '')}`; // Better ID generation with index
+    sortedRegions.forEach((region, regionIndex) => {
+        const regionPlaces = placesByRegion[region];
+        const regionId = `region-${regionIndex}-${region.replace(/\s+/g, '-').replace(/[^\w\-א-ת]/g, '')}`;
         const isExpanded = allExpanded ? 'expanded' : 'collapsed';
         
+        // Group places within this region by city
+        const placesByCity = groupPlacesByCity(regionPlaces);
+        
+        // Sort cities by number of places (descending order)
+        const sortedCities = Object.keys(placesByCity).sort((a, b) => {
+            return placesByCity[b].length - placesByCity[a].length;
+        });
+        
+        let regionCitiesHTML = '';
+        sortedCities.forEach((city, cityIndex) => {
+            const cityPlaces = placesByCity[city];
+            const cityId = `city-${regionIndex}-${cityIndex}-${city.replace(/\s+/g, '-').replace(/[^\w\-א-ת]/g, '')}`;
+            
+            regionCitiesHTML += `
+                <div class="city-group ${isExpanded}">
+                    <div class="city-header">
+                        <span class="city-title">${escapeHtml(city)} (${cityPlaces.length})</span>
+                        <button class="city-toggle-btn" onclick="toggleCity('${cityId}')">
+                            <span class="toggle-icon">${allExpanded ? '−' : '+'}</span>
+                        </button>
+                    </div>
+                    <div class="city-places" id="${cityId}">
+                        ${cityPlaces.map(place => `
+                            <div class="place-card">
+                                <div class="place-info">
+                                    <div class="place-name">${escapeHtml(place.name)}</div>
+                                    <div class="place-address">${escapeHtml(place.address)}</div>
+                                </div>
+                                ${place.link ? `<a href="${escapeHtml(place.link)}" target="_blank" class="place-link">${t.visitWebsite}</a>` : ''}
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        });
+        
         placesHTML += `
-            <div class="city-group ${isExpanded}">
-                <div class="city-header">
-                    <span class="city-title">${escapeHtml(city)} (${cityPlaces.length})</span>
-                    <button class="city-toggle-btn" onclick="toggleCity('${cityId}')">
+            <div class="region-group ${isExpanded}">
+                <div class="region-header">
+                    <span class="region-title">${escapeHtml(region)} (${regionPlaces.length})</span>
+                    <button class="region-toggle-btn" onclick="toggleRegion('${regionId}')">
                         <span class="toggle-icon">${allExpanded ? '−' : '+'}</span>
                     </button>
                 </div>
-                <div class="city-places" id="${cityId}">
-                    ${cityPlaces.map(place => `
-                        <div class="place-card">
-                            <div class="place-info">
-                                <div class="place-name">${escapeHtml(place.name)}</div>
-                                <div class="place-address">${escapeHtml(place.address)}</div>
-                            </div>
-                            ${place.link ? `<a href="${escapeHtml(place.link)}" target="_blank" class="place-link">${t.visitWebsite}</a>` : ''}
-                        </div>
-                    `).join('')}
+                <div class="region-cities" id="${regionId}">
+                    ${regionCitiesHTML}
                 </div>
             </div>
         `;
     });
     
     placesList.innerHTML = placesHTML;
+}
+
+// Group places by region
+function groupPlacesByRegion(places) {
+    const regionGroups = {};
+    
+    places.forEach(place => {
+        const region = place.region || (currentLanguage === 'he' ? 'כללי' : 'General');
+        
+        if (!regionGroups[region]) {
+            regionGroups[region] = [];
+        }
+        regionGroups[region].push(place);
+    });
+    
+    return regionGroups;
 }
 
 // Group places by city name extracted from address
@@ -548,13 +595,75 @@ function toggleCity(cityId) {
     }
 }
 
+// Toggle individual region expand/collapse
+function toggleRegion(regionId) {
+    const regionElement = document.getElementById(regionId);
+    const regionGroup = regionElement.parentElement;
+    const toggleIcon = regionGroup.querySelector('.toggle-icon');
+    
+    if (regionGroup.classList.contains('expanded')) {
+        regionGroup.classList.remove('expanded');
+        regionGroup.classList.add('collapsed');
+        toggleIcon.textContent = '+';
+        
+        // Also collapse all cities within this region
+        const cityGroups = regionElement.querySelectorAll('.city-group');
+        cityGroups.forEach(cityGroup => {
+            cityGroup.classList.remove('expanded');
+            cityGroup.classList.add('collapsed');
+            const cityToggleIcon = cityGroup.querySelector('.toggle-icon');
+            if (cityToggleIcon) {
+                cityToggleIcon.textContent = '+';
+            }
+        });
+    } else {
+        regionGroup.classList.remove('collapsed');
+        regionGroup.classList.add('expanded');
+        toggleIcon.textContent = '−';
+        
+        // Also expand all cities within this region if allExpanded is true
+        if (allExpanded) {
+            const cityGroups = regionElement.querySelectorAll('.city-group');
+            cityGroups.forEach(cityGroup => {
+                cityGroup.classList.remove('collapsed');
+                cityGroup.classList.add('expanded');
+                const cityToggleIcon = cityGroup.querySelector('.toggle-icon');
+                if (cityToggleIcon) {
+                    cityToggleIcon.textContent = '−';
+                }
+            });
+        }
+    }
+}
+
+// Make functions globally available
+window.toggleRegion = toggleRegion;
+window.toggleCity = toggleCity;
+
 // Toggle all categories expand/collapse
 function toggleAllCategories() {
     const t = translations[currentLanguage];
+    const regionGroups = document.querySelectorAll('.region-group');
     const cityGroups = document.querySelectorAll('.city-group');
     
     allExpanded = !allExpanded;
     
+    // Toggle all regions
+    regionGroups.forEach(group => {
+        const toggleIcon = group.querySelector('.toggle-icon');
+        
+        if (allExpanded) {
+            group.classList.remove('collapsed');
+            group.classList.add('expanded');
+            toggleIcon.textContent = '−';
+        } else {
+            group.classList.remove('expanded');
+            group.classList.add('collapsed');
+            toggleIcon.textContent = '+';
+        }
+    });
+    
+    // Toggle all cities
     cityGroups.forEach(group => {
         const toggleIcon = group.querySelector('.toggle-icon');
         

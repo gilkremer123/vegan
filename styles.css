@@ -195,7 +195,75 @@ main {
     gap: 2rem;
 }
 
-/* City Group Styles */
+/* Region Group Styles */
+.region-group {
+    margin-bottom: 2rem;
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    overflow: hidden;
+    border: 2px solid #E8F5E8;
+}
+
+.region-header {
+    background: linear-gradient(135deg, #2E7D32, #388E3C);
+    color: white;
+    padding: 1.25rem 1.5rem;
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 700;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.region-title {
+    flex: 1;
+}
+
+.region-toggle-btn {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    border: none;
+    padding: 0.5rem 0.75rem;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    font-size: 1.3rem;
+    font-weight: bold;
+    width: 2.75rem;
+    height: 2.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.region-toggle-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.region-cities {
+    padding: 0;
+    background: #F8F9FA;
+}
+
+.region-group.collapsed .region-cities {
+    display: none;
+}
+
+.region-group.expanded .region-cities {
+    display: block;
+}
+
+/* City Group Styles (updated for regional hierarchy) */
+.region-cities .city-group {
+    margin: 1rem;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    overflow: hidden;
+}
+
 .city-group {
     background: white;
     border-radius: 12px;

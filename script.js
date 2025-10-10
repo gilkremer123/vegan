@@ -112,7 +112,20 @@ function updateLanguage() {
     document.querySelectorAll('[data-key]').forEach(element => {
         const key = element.getAttribute('data-key');
         if (t[key]) {
-            element.textContent = t[key];
+            // Special handling for title to preserve logo
+            if (key === 'title') {
+                const logo = element.querySelector('.site-logo');
+                if (logo) {
+                    // Keep the logo and update only the text content
+                    element.innerHTML = '';
+                    element.appendChild(logo);
+                    element.appendChild(document.createTextNode(' ' + t[key]));
+                } else {
+                    element.textContent = t[key];
+                }
+            } else {
+                element.textContent = t[key];
+            }
         }
     });
     

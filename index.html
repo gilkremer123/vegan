@@ -49,6 +49,10 @@
     <meta name="msapplication-tooltip" content="Find vegan restaurants in Israel">
     <meta name="theme-color" content="#4CAF50">
     
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="logo1.png">
+    <link rel="shortcut icon" type="image/png" href="logo1.png">
+    
     <!-- Structured Data for Search Engines -->
     <script type="application/ld+json">
     {
@@ -129,7 +133,9 @@
     <header>
         <div class="header-top">
             <h1 data-key="title">
-                <img src="logo1.png" alt="Vegan Places Logo" class="site-logo">
+                <img src="logo1.png" alt="Vegan Places Logo" class="site-logo" 
+                     onerror="this.style.display='none'" 
+                     onload="console.log('Logo loaded successfully')">
                 מקומות טבעוניים בישראל
             </h1>
             <button id="languageToggle" class="language-btn">EN</button>

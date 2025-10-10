@@ -16,7 +16,7 @@ const translations = {
         loading: 'טוען מקומות טבעוניים...',
         noPlacesFound: 'לא נמצאו מקומות טבעוניים התואמים לחיפוש.',
         loadError: 'שגיאה בטעינת המקומות הטבעוניים. אנא נסה שוב מאוחר יותר.',
-        contactText: 'שכחתי מקום? צריך לתקן משהו? צור קשר כאן',
+        contactText: 'צור קשר',
         expandAll: 'הרחב הכל',
         collapseAll: 'צמצם הכל'
     },
@@ -29,7 +29,7 @@ const translations = {
         loading: 'Loading vegan places...',
         noPlacesFound: 'No vegan places found matching your search.',
         loadError: 'Failed to load vegan places. Please try again later.',
-        contactText: 'Forgot a place? Need to fix something? Contact us here',
+        contactText: 'Contact',
         expandAll: 'Expand All',
         collapseAll: 'Collapse All'
     }

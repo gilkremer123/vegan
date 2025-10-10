@@ -151,7 +151,10 @@
         <div id="listView" class="view-container active">
             <div class="search-bar">
                 <input type="text" id="searchInput" data-placeholder-key="searchPlaceholder" placeholder="חפש מקומות טבעוניים...">
-                <button id="toggleAllBtn" class="toggle-all-btn" data-key="collapseAll">צמצם הכל</button>
+                <div class="button-row">
+                    <button id="toggleAllBtn" class="toggle-all-btn" data-key="collapseAll">צמצם הכל</button>
+                    <button id="contactBtn" class="contact-btn" data-key="contactText">צור קשר</button>
+                </div>
             </div>
             <div id="placesList" class="places-list">
                 <!-- Places will be loaded here -->
@@ -166,7 +169,7 @@
 
     <footer>
         <div class="contact-section">
-            <button id="contactBtn" class="contact-btn" data-key="contactText">שכחתי מקום? צריך לתקן משהו? צרו קשר כאן</button>
+            <!-- Contact button moved to search bar area -->
         </div>
     </footer>
 

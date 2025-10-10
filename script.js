@@ -8,7 +8,7 @@ let allExpanded = true; // Track global expand/collapse state
 // Language translations
 const translations = {
     he: {
-        title: '🌱 מקומות טבעוניים בישראל',
+        title: 'מקומות טבעוניים בישראל',
         listView: '📋 תצוגת רשימה',
         mapView: '🗺️ תצוגת מפה',
         searchPlaceholder: 'חפש מקומות טבעוניים...',
@@ -21,7 +21,7 @@ const translations = {
         collapseAll: 'צמצם הכל'
     },
     en: {
-        title: '🌱 Vegan Places in Israel',
+        title: 'Vegan Places in Israel',
         listView: '📋 List View',
         mapView: '🗺️ Map View',
         searchPlaceholder: 'Search vegan places...',

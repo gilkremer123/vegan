@@ -401,6 +401,76 @@ main {
     box-shadow: 0 4px 16px rgba(0,0,0,0.1);
 }
 
+/* Map wrapper to position style toggle */
+.map-wrapper {
+    position: relative;
+}
+
+.map-style-toggle {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(20,20,22,0.65);
+    padding: 6px 10px;
+    border-radius: 30px;
+    backdrop-filter: blur(4px);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+}
+
+.map-style-label {
+    color: #fff;
+    font-size: 0.8rem;
+    font-weight: 500;
+    user-select: none;
+}
+
+/* Custom vegan pin */
+.custom-vegan-pin { background: none; border: none; }
+.custom-vegan-pin .pin-shell {
+    width: 26px; height: 26px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg);
+    background: linear-gradient(135deg,#39c16c 0%, #1e7f3f 100%);
+    border: 2px solid #fff; box-shadow: 0 2px 6px rgba(0,0,0,0.35);
+    display:flex; align-items:center; justify-content:center; transition: transform .2s;
+}
+.custom-vegan-pin .pin-shell:hover { transform: rotate(-45deg) scale(1.15); }
+.custom-vegan-pin .pin-emoji { transform: rotate(45deg); font-size: 13px; }
+
+/* Toggle switch */
+.switch { position: relative; display: inline-block; width: 46px; height: 24px; }
+.switch input { opacity: 0; width: 0; height: 0; }
+.slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #555; transition: .3s; border-radius: 34px; }
+.slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .3s; border-radius: 50%; }
+input:checked + .slider { background-color: #00b7ff; }
+input:checked + .slider:before { transform: translateX(22px); }
+
+/* Waze style (dark with hue tweaks) using CSS filter so Hebrew labels remain */
+/* Improved Waze dark filter: start mild invert, recolor roads via hue-rotate */
+.waze-map-filter .leaflet-pane.leaflet-map-pane { filter: invert(85%) hue-rotate(185deg) brightness(0.7) contrast(1.1) saturate(1.15); }
+
+/* Re-invert markers & UI (so they keep natural colors) */
+.waze-map-filter .leaflet-marker-icon,
+.waze-map-filter .leaflet-control-container,
+.waze-map-filter .leaflet-popup,
+.waze-map-filter .map-style-toggle { filter: invert(100%) hue-rotate(185deg) brightness(1.08) contrast(0.92); }
+
+/* Refine popup look in dark mode */
+.waze-map-filter .leaflet-popup-content-wrapper { background: #1c1c1e; color: #f5f5f7; }
+.waze-map-filter .leaflet-popup-tip { background: #1c1c1e; }
+.waze-map-filter .leaflet-popup-content h3 { color: #4dd2ff !important; }
+.waze-map-filter .leaflet-popup-content a { color: #7CFC90 !important; }
+
+/* Zoom controls dark styling when filter active */
+.waze-map-filter .leaflet-control-zoom a { background:#1c1c1e; color:#4dd2ff; border:1px solid #4dd2ff; }
+.waze-map-filter .leaflet-control-zoom a:hover { background:#4dd2ff; color:#1c1c1e; }
+
+/* Dark overlay to dampen bright sea/background and approximate Waze muted palette */
+.dark-overlay { position:absolute; inset:0; pointer-events:none; background: radial-gradient(circle at 30% 40%, rgba(255,255,255,0.02), rgba(0,0,0,0.55) 80%); mix-blend-mode:multiply; opacity:0; transition: opacity .4s; z-index:400; }
+.waze-map-filter .dark-overlay { opacity:1; }
+
 /* Responsive Design */
 @media (max-width: 768px) {
     header {

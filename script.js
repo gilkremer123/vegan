@@ -280,6 +280,19 @@ function updateLanguage() {
             urlInput.title = 'Enter a valid website URL starting with https:// or www.';
         }
     }
+    updateWazeStyleLabel();
+}
+
+function updateWazeStyleLabel() {
+    const label = document.getElementById('wazeStyleLabel');
+    const toggle = document.getElementById('wazeStyleToggle');
+    if (!label || !toggle) return;
+    const isOn = toggle.checked;
+    if (currentLanguage === 'he') {
+        label.textContent = isOn ? 'מצב Waze (חשוך)' : 'מפה רגילה';
+    } else {
+        label.textContent = isOn ? 'Waze Dark Mode' : 'Standard Map';
+    }
 }
 
 // Switch between list and map modes
@@ -557,10 +570,30 @@ function initializeMap() {
     // Center map on Israel (approximate center)
     map = L.map('map').setView([31.5, 34.8], 8);
     
-    // Add OpenStreetMap tiles
+    // Base OSM tiles (Hebrew capable)
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap contributors'
+        attribution: '© OpenStreetMap contributors',
+        maxZoom: 19
     }).addTo(map);
+    // Attach Waze style toggle (simulate dark Waze look while keeping Hebrew labels)
+    const toggle = document.getElementById('wazeStyleToggle');
+    const mapWrapper = document.getElementById('map').closest('.map-wrapper');
+    if (toggle && mapWrapper) {
+        const apply = () => {
+            if (toggle.checked) {
+                mapWrapper.classList.add('waze-map-filter');
+                localStorage.setItem('wazeStyle','on');
+            } else {
+                mapWrapper.classList.remove('waze-map-filter');
+                localStorage.setItem('wazeStyle','off');
+            }
+            updateWazeStyleLabel();
+        };
+        toggle.addEventListener('change', apply);
+        const pref = localStorage.getItem('wazeStyle');
+        toggle.checked = pref ? pref === 'on' : true; // default ON
+        apply();
+    }
     
     // Add places to map
     addMarkersToMap();
@@ -584,7 +617,15 @@ async function addMarkersToMap() {
             
             if (coordinates) {
                 console.log(`📌 Creating marker at:`, coordinates);
-                const marker = L.marker(coordinates).addTo(map);
+                const marker = L.marker(coordinates, {
+                    icon: L.divIcon({
+                        className: 'custom-vegan-pin',
+                        html: `<div class="pin-shell"><span class="pin-emoji">🌱</span></div>`,
+                        iconSize: [26, 26],
+                        iconAnchor: [13, 26],
+                        popupAnchor: [0, -24]
+                    })
+                }).addTo(map);
                 
                 const popupContent = `
                     <div style="min-width: 200px; ${currentLanguage === 'he' ? 'direction: rtl; text-align: right;' : 'direction: ltr; text-align: left;'}">

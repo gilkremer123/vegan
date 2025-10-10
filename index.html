@@ -138,6 +138,9 @@
     
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
+    <!-- EmailJS SDK -->
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
 </head>
 <body>
     <header>
@@ -174,6 +177,46 @@
         <!-- Map View -->
         <div id="mapView" class="view-container">
             <div id="map"></div>
+        </div>
+
+        <!-- Contact Form Modal -->
+        <div id="contactModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 data-key="addPlaceTitle">הוספת מקום טבעוני</h2>
+                    <button class="close-btn" onclick="closeContactModal()">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <p data-key="contactOptions">תוכלו גם לפנות אלינו באימייל במקום למלא את הטופס:</p>
+                    <button id="emailContactBtn" class="email-contact-btn" data-key="emailContact">צור קשר באימייל</button>
+                    
+                    <div class="form-divider">
+                        <span data-key="orText">או מלאו את הטופס:</span>
+                    </div>
+                    
+                    <form id="addPlaceForm">
+                        <div class="form-group">
+                            <label for="placeName" data-key="placeNameLabel">שם המקום *</label>
+                            <input type="text" id="placeName" name="placeName" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="placeAddress" data-key="placeAddressLabel">כתובת *</label>
+                            <input type="text" id="placeAddress" name="placeAddress" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="placeLink" data-key="placeLinkLabel">קישור לאתר או פרופיל של המקום *</label>
+                            <input type="url" id="placeLink" name="placeLink" required>
+                        </div>
+                        
+                        <div class="form-actions">
+                            <button type="submit" class="submit-btn" data-key="submitForm">שלח הצעה</button>
+                            <button type="button" class="cancel-btn" onclick="closeContactModal()" data-key="cancel">ביטול</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
         </div>
     </main>
 

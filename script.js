@@ -18,7 +18,16 @@ const translations = {
         loadError: 'שגיאה בטעינת המקומות הטבעוניים. אנא נסה שוב מאוחר יותר.',
         contactText: 'צור קשר',
         expandAll: 'הרחב הכל',
-        collapseAll: 'צמצם הכל'
+        collapseAll: 'צמצם הכל',
+        addPlaceTitle: 'הוספת מקום טבעוני',
+        contactOptions: 'תוכלו גם לפנות אלינו באימייל במקום למלא את הטופס:',
+        emailContact: 'צור קשר באימייל',
+        orText: 'או מלאו את הטופס:',
+        placeNameLabel: 'שם המקום *',
+        placeAddressLabel: 'כתובת *',
+        placeLinkLabel: 'קישור לאתר או פרופיל של המקום *',
+        submitForm: 'שלח הצעה',
+        cancel: 'ביטול'
     },
     en: {
         title: 'Vegan Places in Israel',
@@ -31,7 +40,16 @@ const translations = {
         loadError: 'Failed to load vegan places. Please try again later.',
         contactText: 'Contact',
         expandAll: 'Expand All',
-        collapseAll: 'Collapse All'
+        collapseAll: 'Collapse All',
+        addPlaceTitle: 'Add Vegan Place',
+        contactOptions: 'You can also contact us via email instead of filling the form:',
+        emailContact: 'Contact via Email',
+        orText: 'Or fill out the form:',
+        placeNameLabel: 'Place Name *',
+        placeAddressLabel: 'Address *',
+        placeLinkLabel: 'Website or Profile Link *',
+        submitForm: 'Submit Suggestion',
+        cancel: 'Cancel'
     }
 };
 
@@ -48,6 +66,18 @@ const toggleAllBtn = document.getElementById('toggleAllBtn');
 
 // Initialize the application
 document.addEventListener('DOMContentLoaded', function() {
+    // Initialize EmailJS
+    try {
+        emailjs.init("ZS8tiM0rUEIcKH_3m");
+        console.log('EmailJS initialized successfully');
+        
+        // Test EmailJS configuration
+        console.log('Testing EmailJS configuration...');
+        testEmailJSConfig();
+    } catch (error) {
+        console.error('EmailJS initialization failed:', error);
+    }
+    
     loadPlaces();
     setupEventListeners();
     updateLanguage(); // Set initial language
@@ -60,8 +90,14 @@ function setupEventListeners() {
     mapModeBtn.addEventListener('click', () => switchMode('map'));
     searchInput.addEventListener('input', filterPlaces);
     languageToggle.addEventListener('click', toggleLanguage);
-    contactBtn.addEventListener('click', openContactEmail);
+    contactBtn.addEventListener('click', openContactModal);
     toggleAllBtn.addEventListener('click', toggleAllCategories);
+    
+    // Add event listener for email contact button in modal
+    document.getElementById('emailContactBtn').addEventListener('click', openContactEmail);
+    
+    // Add event listener for form submission
+    document.getElementById('addPlaceForm').addEventListener('submit', handleFormSubmission);
 }
 
 // Open contact email
@@ -77,6 +113,98 @@ function openContactEmail() {
     const mailtoLink = `mailto:kremerint@gmail.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
     window.open(mailtoLink);
 }
+
+// Open contact modal
+function openContactModal() {
+    const modal = document.getElementById('contactModal');
+    modal.style.display = 'block';
+    document.body.style.overflow = 'hidden'; // Prevent background scrolling
+}
+
+// Close contact modal
+function closeContactModal() {
+    const modal = document.getElementById('contactModal');
+    modal.style.display = 'none';
+    document.body.style.overflow = 'auto'; // Restore scrolling
+    
+    // Reset form
+    document.getElementById('addPlaceForm').reset();
+}
+
+// Handle form submission
+function handleFormSubmission(event) {
+    event.preventDefault();
+    
+    // Show loading state
+    const submitBtn = event.target.querySelector('.submit-btn');
+    const originalText = submitBtn.textContent;
+    submitBtn.textContent = currentLanguage === 'he' ? 'שולח...' : 'Sending...';
+    submitBtn.disabled = true;
+    
+    const formData = new FormData(event.target);
+    
+    // Prepare template parameters for EmailJS
+    const templateParams = {
+        place_name: formData.get('placeName'),
+        place_address: formData.get('placeAddress'),
+        place_link: formData.get('placeLink')
+    };
+    
+    console.log('Sending email with params:', templateParams); // Debug log
+    
+    // Send email via EmailJS
+    emailjs.send('service_r8kfvfn', 'template_gr0l29r', templateParams)
+        .then(function(response) {
+            console.log('Email sent successfully:', response);
+            showSuccessMessage();
+            closeContactModal();
+        })
+        .catch(function(error) {
+            console.error('Email failed to send:', error);
+            console.error('Error details:', error.text, error.status);
+            showErrorMessage(error);
+        })
+        .finally(function() {
+            // Restore button state
+            submitBtn.textContent = originalText;
+            submitBtn.disabled = false;
+        });
+}
+
+// Show success message
+function showSuccessMessage() {
+    const message = currentLanguage === 'he' ? 
+        'תודה! ההצעה נשלחה בהצלחה. נבדוק אותה ונוסיף למאגר בהקדם.' :
+        'Thank you! Your suggestion has been sent successfully. We\'ll review it and add it to our database soon.';
+    
+    alert(message);
+}
+
+// Show error message  
+function showErrorMessage(error) {
+    console.error('EmailJS Error:', error);
+    
+    let message;
+    if (error && error.status === 422) {
+        message = currentLanguage === 'he' ?
+            'שגיאה: נתונים שגויים. אנא בדקו שכל השדות מלאים כראוי.' :
+            'Error: Invalid data. Please check that all fields are filled correctly.';
+    } else if (error && error.status === 400) {
+        message = currentLanguage === 'he' ?
+            'שגיאה: בעיה בהגדרות EmailJS. צרו קשר באימייל.' :
+            'Error: EmailJS configuration issue. Please contact via email.';
+    } else {
+        message = currentLanguage === 'he' ?
+            'אופס! הייתה שגיאה בשליחה. אנא נסו שוב או צרו קשר באימייל.' :
+            'Oops! There was an error sending your suggestion. Please try again or contact us via email.';
+    }
+    
+    alert(message);
+}
+
+// Make modal functions globally available
+window.openContactModal = openContactModal;
+window.closeContactModal = closeContactModal;
 
 // Toggle language between Hebrew and English
 function toggleLanguage() {
@@ -742,4 +870,44 @@ function updateMetaDescription() {
     if (metaDesc) {
         metaDesc.setAttribute('content', description);
     }
+}
+
+// Test EmailJS configuration
+function testEmailJSConfig() {
+    // Verify EmailJS is loaded
+    if (typeof emailjs === 'undefined') {
+        console.error('EmailJS library not loaded');
+        return;
+    }
+    
+    console.log('EmailJS library loaded successfully');
+    console.log('Service ID: service_r8kfvfn');
+    console.log('Template ID: template_gr0l29r');
+    console.log('Public Key: ZS8tiM0rUEIcKH_3m');
+    
+    // You can uncomment the next line to test sending an actual email
+    // sendTestEmail();
+}
+
+// Test email sending (uncomment to use)
+function sendTestEmail() {
+    const testParams = {
+        place_name: 'Test Restaurant',
+        place_address: 'Test Address, Tel Aviv',
+        place_link: 'https://test-restaurant.com'
+    };
+    
+    console.log('Sending test email with params:', testParams);
+    
+    emailjs.send('service_r8kfvfn', 'template_gr0l29r', testParams)
+        .then(function(response) {
+            console.log('✅ Test email sent successfully!', response);
+            alert('Test email sent successfully!');
+        })
+        .catch(function(error) {
+            console.error('❌ Test email failed:', error);
+            console.error('Error status:', error.status);
+            console.error('Error text:', error.text);
+            alert('Test email failed: ' + error.text);
+        });
 }

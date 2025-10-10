@@ -207,7 +207,10 @@
                         
                         <div class="form-group">
                             <label for="placeLink" data-key="placeLinkLabel">קישור לאתר או פרופיל של המקום *</label>
-                            <input type="url" id="placeLink" name="placeLink" required>
+                            <input type="text" id="placeLink" name="placeLink" required 
+                                   pattern="^(https?://|www\.)[a-zA-Z0-9\-._~:/?#[\]@!$&'()*+,;=%]+" 
+                                   placeholder="https://example.com או www.example.com"
+                                   title="הזינו כתובת אתר תקינה המתחילה ב-https:// או www.">
                         </div>
                         
                         <div class="form-actions">

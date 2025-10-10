@@ -143,11 +143,17 @@ function handleFormSubmission(event) {
     
     const formData = new FormData(event.target);
     
+    // Normalize URL - add https:// if it starts with www
+    let placeLink = formData.get('placeLink');
+    if (placeLink && placeLink.toLowerCase().startsWith('www.')) {
+        placeLink = 'https://' + placeLink;
+    }
+    
     // Prepare template parameters for EmailJS
     const templateParams = {
         place_name: formData.get('placeName'),
         place_address: formData.get('placeAddress'),
-        place_link: formData.get('placeLink')
+        place_link: placeLink
     };
     
     console.log('Sending email with params:', templateParams); // Debug log
@@ -261,6 +267,18 @@ function updateLanguage() {
     const placeholderKey = searchInput.getAttribute('data-placeholder-key');
     if (placeholderKey && t[placeholderKey]) {
         searchInput.placeholder = t[placeholderKey];
+    }
+    
+    // Update URL input placeholder and title
+    const urlInput = document.getElementById('placeLink');
+    if (urlInput) {
+        if (currentLanguage === 'he') {
+            urlInput.placeholder = 'https://example.com או www.example.com';
+            urlInput.title = 'הזינו כתובת אתר תקינה המתחילה ב-https:// או www.';
+        } else {
+            urlInput.placeholder = 'https://example.com or www.example.com';
+            urlInput.title = 'Enter a valid website URL starting with https:// or www.';
+        }
     }
 }
 

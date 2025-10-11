@@ -13,7 +13,7 @@ const translations = {
         listView: '📋 תצוגת רשימה',
         mapView: '🗺️ תצוגת מפה',
         searchPlaceholder: 'חפש מקומות טבעוניים...',
-        visitWebsite: 'בקר באתר',
+    visitWebsite: 'בקרו באתר',
         loading: 'טוען מקומות טבעוניים...',
         noPlacesFound: 'לא נמצאו מקומות טבעוניים התואמים לחיפוש.',
         loadError: 'שגיאה בטעינת המקומות הטבעוניים. אנא נסה שוב מאוחר יותר.',

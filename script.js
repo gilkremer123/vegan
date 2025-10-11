@@ -570,30 +570,11 @@ function initializeMap() {
     // Center map on Israel (approximate center)
     map = L.map('map').setView([31.5, 34.8], 8);
     
-    // Base OSM tiles (Hebrew capable)
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap contributors',
+    // Use clean, bright Waze-style tiles
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+        attribution: '© OpenStreetMap contributors © CARTO',
         maxZoom: 19
     }).addTo(map);
-    // Attach Waze style toggle (simulate dark Waze look while keeping Hebrew labels)
-    const toggle = document.getElementById('wazeStyleToggle');
-    const mapWrapper = document.getElementById('map').closest('.map-wrapper');
-    if (toggle && mapWrapper) {
-        const apply = () => {
-            if (toggle.checked) {
-                mapWrapper.classList.add('waze-map-filter');
-                localStorage.setItem('wazeStyle','on');
-            } else {
-                mapWrapper.classList.remove('waze-map-filter');
-                localStorage.setItem('wazeStyle','off');
-            }
-            updateWazeStyleLabel();
-        };
-        toggle.addEventListener('change', apply);
-        const pref = localStorage.getItem('wazeStyle');
-        toggle.checked = pref ? pref === 'on' : true; // default ON
-        apply();
-    }
     
     // Add places to map
     addMarkersToMap();
@@ -668,6 +649,63 @@ async function addMarkersToMap() {
 // Get approximate coordinates for Israeli locations (for demo purposes)
 function getApproximateCoordinates(address) {
     const addressLower = address.toLowerCase().trim();
+    
+    // First check for specific Tel Aviv street addresses with more accurate coordinates
+    const telAvivStreets = {
+        'פרישמן 54': [32.0867, 34.7749], // Beach area
+        'דיזינגוף 130': [32.0842, 34.7748], // Central Dizengoff
+        'פלורנטין 40': [32.0577, 34.7667], // Florentin neighborhood
+        'המלך ג\'ורג 32': [32.0667, 34.7667], // King George area
+        'אחד העם 11': [32.0667, 34.7725], // Central Tel Aviv
+        'לבונטין 7': [32.0577, 34.7667], // Levontin area
+        'אבן גבירול 88': [32.0808, 34.7801], // Ibn Gvirol
+        'אבן גבירול 129': [32.0842, 34.7801], // Ibn Gvirol north
+        'אלנבי 78': [32.0642, 34.7692], // Allenby area
+        'ירמיהו 17': [32.0892, 34.7825], // North Tel Aviv
+        'אחד העם 8': [32.0667, 34.7725], // Central Tel Aviv
+        'דרך שלמה 3': [32.0667, 34.7667], // Central area
+        'החלוצים 8': [32.0808, 34.7875], // North Tel Aviv
+        'צ\'לנוב 27': [32.0692, 34.7667], // Central area
+        'דיזינגוף 140': [32.0842, 34.7748], // Central Dizengoff
+        'שדרות וושינגטון 30': [32.0642, 34.7692], // Washington area
+        'המסגר 38': [32.0667, 34.7725], // Central Tel Aviv
+        'דיזינגוף 50': [32.0808, 34.7748] // Central Dizengoff
+    };
+    
+    // Check for specific Tel Aviv streets first
+    for (const [street, coords] of Object.entries(telAvivStreets)) {
+        if (address.includes(street)) {
+            console.log(`🎯 Found specific Tel Aviv street: ${street}, coords: ${coords}`);
+            return coords;
+        }
+    }
+    
+    // Check for other specific city addresses
+    const specificAddresses = {
+        'הרצל 173, רחובות': [31.8947, 34.8134],
+        'כצנלסון 49, גבעתיים': [32.0719, 34.8106],
+        'ויצמן 140, כפר סבא': [32.1747, 34.9049],
+        'נבטים 28, כרכור': [32.5000, 34.9333],
+        'המייסדים 26, פרדס חנה': [32.4700, 34.9583],
+        'דרך המצפה 5, קציר': [32.4500, 35.0167],
+        'המייסדים 41, זכרון יעקב': [32.5700, 34.9383],
+        'נתנזון 22, חיפה': [32.7940, 34.9896],
+        'נחל צינה 41, מצפה רמון': [30.6094, 34.8017],
+        'דרך העצמאות 74, בנימינה': [32.5217, 34.9600],
+        'שדרות מוריה 105, חיפה': [32.7940, 34.9896],
+        'עמל 1, רעננה': [32.1847, 34.8783],
+        'ביאליק 76, רמת גן': [32.0719, 34.8225],
+        'כצנלסון 14, כפר סבא': [32.1747, 34.9049],
+        'הנחשול 30, ראשון לציון': [31.9730, 34.7925]
+    };
+    
+    // Check for specific addresses
+    for (const [fullAddress, coords] of Object.entries(specificAddresses)) {
+        if (address.includes(fullAddress.split(',')[0])) { // Match the street part
+            console.log(`🎯 Found specific address: ${fullAddress}, coords: ${coords}`);
+            return coords;
+        }
+    }
     
     // Simple mapping for demo - in a real app, use a geocoding service
     const locationMap = {

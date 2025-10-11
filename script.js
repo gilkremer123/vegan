@@ -55,8 +55,7 @@ const translations = {
 };
 
 // DOM elements
-const listModeBtn = document.getElementById('listMode');
-const mapModeBtn = document.getElementById('mapMode');
+const modeToggleBtn = document.getElementById('modeToggle');
 const listView = document.getElementById('listView');
 const mapView = document.getElementById('mapView');
 const placesList = document.getElementById('placesList');
@@ -87,8 +86,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Setup event listeners
 function setupEventListeners() {
-    listModeBtn.addEventListener('click', () => switchMode('list'));
-    mapModeBtn.addEventListener('click', () => switchMode('map'));
+    modeToggleBtn.addEventListener('click', toggleMode);
     searchInput.addEventListener('input', filterPlaces);
     languageToggle.addEventListener('click', toggleLanguage);
     contactBtn.addEventListener('click', openContactModal);
@@ -239,8 +237,11 @@ function updateLanguage() {
     // Update document title
     document.title = t.title;
     
-    // Update toggle button text
+    // Update language toggle button text
     languageToggle.textContent = currentLanguage === 'he' ? 'EN' : 'עב';
+
+    // Update single mode toggle button label depending on current view
+    updateModeToggleLabel();
     
     // Update toggle all button text
     toggleAllBtn.textContent = allExpanded ? t.collapseAll : t.expandAll;
@@ -299,22 +300,33 @@ function updateWazeStyleLabel() {
 }
 
 // Switch between list and map modes
-function switchMode(mode) {
-    if (mode === 'list') {
-        listModeBtn.classList.add('active');
-        mapModeBtn.classList.remove('active');
-        listView.classList.add('active');
-        mapView.classList.remove('active');
-    } else {
-        mapModeBtn.classList.add('active');
-        listModeBtn.classList.remove('active');
-        mapView.classList.add('active');
+let currentMode = 'list'; // 'list' or 'map'
+function toggleMode() {
+    if (currentMode === 'list') {
+        // Switch to map
+        currentMode = 'map';
         listView.classList.remove('active');
-        
-        // Initialize map if not already done
-        if (!map) {
-            initializeMap();
-        }
+        mapView.classList.add('active');
+        if (!map) initializeMap();
+    } else {
+        // Switch to list
+        currentMode = 'list';
+        mapView.classList.remove('active');
+        listView.classList.add('active');
+    }
+    updateModeToggleLabel();
+}
+
+function updateModeToggleLabel() {
+    if (!modeToggleBtn) return;
+    const t = translations[currentLanguage];
+    // Button should show the OTHER view it will switch to
+    if (currentMode === 'list') {
+        modeToggleBtn.dataset.mode = 'list';
+        modeToggleBtn.textContent = (currentLanguage === 'he' ? '🗺️ תצוגת מפה' : '🗺️ Map View');
+    } else {
+        modeToggleBtn.dataset.mode = 'map';
+        modeToggleBtn.textContent = (currentLanguage === 'he' ? '📋 תצוגת רשימה' : '📋 List View');
     }
 }
 

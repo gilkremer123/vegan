@@ -1,6 +1,7 @@
 // Global variables
 let places = [];
 let map;
+let baseLayer; // current base tile layer
 let markers = [];
 let currentLanguage = 'he'; // Default to Hebrew
 let allExpanded = false; // Track global expand/collapse state - start collapsed
@@ -220,6 +221,8 @@ function toggleLanguage() {
     
     // Update map markers if map is initialized
     if (map) {
+        // Switch base tiles to appropriate language style then redraw markers
+        setBaseLayer();
         addMarkersToMap();
     }
 }
@@ -569,15 +572,34 @@ function filterPlaces() {
 function initializeMap() {
     // Center map on Israel (approximate center)
     map = L.map('map').setView([31.5, 34.8], 8);
-    
-    // Use clean, bright Waze-style tiles
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-        attribution: '© OpenStreetMap contributors © CARTO',
-        maxZoom: 19
-    }).addTo(map);
-    
+    // Add correct base layer for current language
+    setBaseLayer();
     // Add places to map
     addMarkersToMap();
+}
+
+// Choose a base tile layer depending on language (Hebrew prefers local names)
+function setBaseLayer() {
+    if (!map) return;
+    // Remove existing base layer if present
+    if (baseLayer) {
+        map.removeLayer(baseLayer);
+    }
+    if (currentLanguage === 'he') {
+        // Standard OpenStreetMap raster tiles usually display local (Hebrew) names inside Israel
+        // (If you want even more Hebrew coverage you can explore Israeli community tiles.)
+        baseLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors',
+            maxZoom: 19
+        });
+    } else {
+        // English-friendly clean light style
+        baseLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+            attribution: '© OpenStreetMap contributors © CARTO',
+            maxZoom: 19
+        });
+    }
+    baseLayer.addTo(map);
 }
 
 // Add markers to map for all places

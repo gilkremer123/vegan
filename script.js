@@ -592,12 +592,14 @@ function setBaseLayer() {
             attribution: '© OpenStreetMap contributors',
             maxZoom: 19
         });
+        console.log('🗺️ Base layer set: OpenStreetMap (expected Hebrew labels)');
     } else {
         // English-friendly clean light style
         baseLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
             attribution: '© OpenStreetMap contributors © CARTO',
             maxZoom: 19
         });
+        console.log('🗺️ Base layer set: CARTO light (English-oriented)');
     }
     baseLayer.addTo(map);
 }

@@ -562,8 +562,23 @@ main {
         font-size: 1rem;
     }
     
+    /* Default mobile map height smaller, will expand in map-focused mode */
     #map {
-        height: 400px;
+        height: 55vh; /* relative height for mixed content */
+        min-height: 320px;
+    }
+    /* When map is the active view, stretch it further */
+    body.map-mode-active #map {
+        height: calc(100dvh - 140px); /* subtract approx header + margin */
+        min-height: 60vh;
+    }
+    /* Remove border radius in full height for edge-to-edge feel */
+    body.map-mode-active #map {
+        border-radius: 0;
+        box-shadow: none;
+    }
+    body.map-mode-active .map-wrapper {
+        margin: 0 -1rem; /* allow edge to edge on small screens */
     }
 }
 

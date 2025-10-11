@@ -308,11 +308,13 @@ function toggleMode() {
         listView.classList.remove('active');
         mapView.classList.add('active');
         if (!map) initializeMap();
+        document.body.classList.add('map-mode-active');
     } else {
         // Switch to list
         currentMode = 'list';
         mapView.classList.remove('active');
         listView.classList.add('active');
+        document.body.classList.remove('map-mode-active');
     }
     updateModeToggleLabel();
 }

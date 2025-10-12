@@ -21,6 +21,11 @@
     <meta name="author" content="מקומות טבעוניים בישראל">
     <meta name="robots" content="index, follow">
     <link rel="canonical" href="https://vegan-places-israel.com">
+    <meta name="theme-color" content="#4CAF50">
+    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="apple-touch-icon" href="icons/icon-192.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
     
     <!-- Open Graph Meta Tags for Social Media -->
     <meta property="og:title" content="מקומות טבעוניים בישראל | Vegan Places in Israel">
@@ -231,6 +236,15 @@
     </footer>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="script.js?v=20251011-1"></script>
+        <script src="script.js?v=20251012-1"></script>
+        <script>
+            if ('serviceWorker' in navigator) {
+                window.addEventListener('load', () => {
+                    navigator.serviceWorker.register('/sw.js').then(reg => {
+                        console.log('Service Worker registered', reg.scope);
+                    }).catch(err => console.warn('SW registration failed', err));
+                });
+            }
+        </script>
 </body>
 </html>

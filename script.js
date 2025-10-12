@@ -82,6 +82,13 @@ document.addEventListener('DOMContentLoaded', function() {
     setupEventListeners();
     updateLanguage(); // Set initial language
     generateStructuredData(); // Add structured data for SEO
+    // Apply initial view from URL parameter (?view=map)
+    const params = new URLSearchParams(window.location.search);
+    const viewParam = params.get('view');
+    if (viewParam === 'map') {
+        // Force map mode after initial render tick
+        setTimeout(() => { if (typeof toggleMode === 'function' && currentMode === 'list') toggleMode(); }, 50);
+    }
 });
 
 // Setup event listeners

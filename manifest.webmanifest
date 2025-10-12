@@ -1,0 +1,50 @@
+{
+  "name": "מקומות טבעוניים בישראל | Vegan Places in Israel",
+  "short_name": "Vegan IL",
+  "lang": "he",
+  "dir": "rtl",
+  "start_url": "/index.html?source=pwa",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f5f7fa",
+  "theme_color": "#4CAF50",
+  "description": "מדריך מקיף למקומות טבעוניים בישראל עם חיפוש, מפה ורשימה דו-לשונית.",
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "icons/maskable-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icons/maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "פתח מפה",
+      "short_name": "מפה",
+      "url": "/index.html?view=map",
+      "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "רשימת מקומות",
+      "short_name": "רשימה",
+      "url": "/index.html?view=list",
+      "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }]
+    }
+  ]
+}

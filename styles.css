@@ -562,6 +562,20 @@ main {
         font-size: 1rem;
     }
     
+    /* Apply same tight spacing on mobile */
+    .places-list {
+        gap: 0.65rem; /* same as desktop */
+    }
+    
+    .region-group {
+        margin: 0; /* same as desktop */
+    }
+    
+    .region-header {
+        padding: 0.9rem 1.4rem; /* same as desktop */
+        font-size: 1.45rem;
+    }
+    
     /* Default mobile map height smaller, will expand in map-focused mode */
     #map {
         height: 55vh; /* relative height for mixed content */

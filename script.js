@@ -28,7 +28,16 @@ const translations = {
         placeAddressLabel: 'כתובת *',
         placeLinkLabel: 'קישור לאתר או פרופיל של המקום *',
         submitForm: 'שלח הצעה',
-        cancel: 'ביטול'
+    cancel: 'ביטול',
+    subscribeButton: 'אני רוצה לקבל מייל כשמקום חדש נפתח',
+    subscribeTitle: 'הצטרפות לעדכונים',
+    subscribeDescription: 'קבלו עדכון במייל בכל פעם שמקום טבעוני חדש מתווסף לרשימה.',
+    subscriberNameLabel: 'שם *',
+    subscriberEmailLabel: 'אימייל *',
+    subscribeSubmit: 'הרשמה',
+    subscribeSuccess: 'נרשמתם בהצלחה! תודה.',
+    subscribeExists: 'אתם כבר רשומים לקבלת עדכונים.',
+    subscribeError: 'אירעה שגיאה בהרשמה. נסו שוב או פנו אלינו.'
     },
     en: {
         title: 'Vegan Places in Israel',
@@ -50,7 +59,16 @@ const translations = {
         placeAddressLabel: 'Address *',
         placeLinkLabel: 'Website or Profile Link *',
         submitForm: 'Submit Suggestion',
-        cancel: 'Cancel'
+        cancel: 'Cancel',
+        subscribeButton: 'Email me when a new place is added',
+        subscribeTitle: 'Subscribe to Updates',
+        subscribeDescription: 'Get an email whenever a new vegan place is added to the list.',
+        subscriberNameLabel: 'Name *',
+        subscriberEmailLabel: 'Email *',
+        subscribeSubmit: 'Subscribe',
+        subscribeSuccess: 'You are subscribed. Thank you!',
+        subscribeExists: 'You are already subscribed.',
+        subscribeError: 'There was an error subscribing. Please try again or contact us.'
     }
 };
 
@@ -63,6 +81,9 @@ const searchInput = document.getElementById('searchInput');
 const languageToggle = document.getElementById('languageToggle');
 const contactBtn = document.getElementById('contactBtn');
 const toggleAllBtn = document.getElementById('toggleAllBtn');
+const subscribeBtn = document.getElementById('subscribeBtn');
+const subscribeModal = document.getElementById('subscribeModal');
+let subscriptionSending = false;
 
 // Initialize the application
 document.addEventListener('DOMContentLoaded', function() {
@@ -98,6 +119,7 @@ function setupEventListeners() {
     languageToggle.addEventListener('click', toggleLanguage);
     contactBtn.addEventListener('click', openContactModal);
     toggleAllBtn.addEventListener('click', toggleAllCategories);
+    if (subscribeBtn) subscribeBtn.addEventListener('click', openSubscribeModal);
     
     // Add event listener for email contact button in modal
     document.getElementById('emailContactBtn').addEventListener('click', openContactEmail);
@@ -217,6 +239,8 @@ function showErrorMessage(error) {
 // Make modal functions globally available
 window.openContactModal = openContactModal;
 window.closeContactModal = closeContactModal;
+window.openSubscribeModal = openSubscribeModal;
+window.closeSubscribeModal = closeSubscribeModal;
 
 // Toggle language between Hebrew and English
 function toggleLanguage() {
@@ -292,6 +316,73 @@ function updateLanguage() {
         }
     }
     updateWazeStyleLabel();
+}
+
+// ===== Subscription Feature =====
+function openSubscribeModal() {
+    if (!subscribeModal) return;
+    subscribeModal.style.display = 'block';
+    document.body.style.overflow = 'hidden';
+    const nameInput = document.getElementById('subscriberName');
+    if (nameInput) nameInput.focus();
+    const form = document.getElementById('subscribeForm');
+    if (form && !form.dataset.bound) {
+        form.addEventListener('submit', handleSubscribeSubmit);
+        form.dataset.bound = 'true';
+    }
+}
+
+function closeSubscribeModal() {
+    if (!subscribeModal) return;
+    subscribeModal.style.display = 'none';
+    document.body.style.overflow = 'auto';
+    const form = document.getElementById('subscribeForm');
+    if (form) form.reset();
+}
+
+function handleSubscribeSubmit(e) {
+    e.preventDefault();
+    if (subscriptionSending) return;
+    const t = translations[currentLanguage];
+    const name = document.getElementById('subscriberName').value.trim();
+    const email = document.getElementById('subscriberEmail').value.trim().toLowerCase();
+    if (!name || !email) return;
+    // Local CSV-like storage simulation
+    const existing = JSON.parse(localStorage.getItem('subscribers') || '[]');
+    if (existing.some(s => s.email === email)) {
+        alert(t.subscribeExists);
+        closeSubscribeModal();
+        return;
+    }
+    subscriptionSending = true;
+    const submitBtn = e.target.querySelector('.submit-btn');
+    const originalText = submitBtn.textContent;
+    submitBtn.textContent = currentLanguage === 'he' ? 'שולח...' : 'Sending...';
+    submitBtn.disabled = true;
+    const entry = { name, email, ts: Date.now() };
+    existing.push(entry);
+    localStorage.setItem('subscribers', JSON.stringify(existing));
+    // Send via EmailJS (reuse template) - you receive an email per subscription
+    const templateParams = {
+        place_name: '[SUBSCRIPTION]',
+        place_address: name,
+        place_link: email
+    };
+    emailjs.send('service_r8kfvfn', 'template_gr0l29r', templateParams)
+        .then(resp => {
+            console.log('Subscription email sent', resp);
+            alert(t.subscribeSuccess);
+            closeSubscribeModal();
+        })
+        .catch(err => {
+            console.error('Subscription failed', err);
+            alert(t.subscribeError);
+        })
+        .finally(() => {
+            subscriptionSending = false;
+            submitBtn.textContent = originalText;
+            submitBtn.disabled = false;
+        });
 }
 
 function updateWazeStyleLabel() {

@@ -844,3 +844,33 @@ footer {
 [dir="rtl"] .contact-btn {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
+
+/* Subscription Section */
+.subscription-section {
+    margin-top: 1.5rem;
+    text-align: center;
+}
+
+.subscribe-btn {
+    background: linear-gradient(135deg, #2E7D32, #1B5E20);
+    color: #fff;
+    border: none;
+    padding: 0.9rem 1.8rem;
+    border-radius: 12px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(46, 125, 50, 0.3);
+    line-height: 1.4;
+}
+
+.subscribe-btn:hover {
+    background: linear-gradient(135deg, #1B5E20, #0d3a12);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(46, 125, 50, 0.4);
+}
+
+@media (max-width: 768px) {
+    .subscribe-btn { font-size: 0.9rem; padding: 0.8rem 1.4rem; }
+}

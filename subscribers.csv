@@ -1,0 +1,4 @@
+name,email,timestamp,source
+# Placeholder only. Real-time appends are not possible on static hosting from client-side JS.
+# Each signup: stored locally (localStorage key 'subscribers') + emailed via EmailJS template (template_gr0l29r) with place_name='[SUBSCRIPTION]'.
+# To centralize, add a serverless endpoint and POST {name,email} then append to durable storage (DB/Sheet).

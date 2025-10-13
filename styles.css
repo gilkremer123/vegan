@@ -215,6 +215,7 @@ main {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    cursor: pointer; /* entire header clickable */
 }
 
 .region-title {
@@ -281,6 +282,13 @@ main {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    cursor: pointer; /* entire header clickable */
+}
+
+/* Focus outline for keyboard accessibility */
+.region-header:focus, .city-header:focus {
+    outline: 3px solid #FFEB3B;
+    outline-offset: 2px;
 }
 
 .city-title {

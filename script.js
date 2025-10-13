@@ -563,9 +563,9 @@ function displayPlaces(placesToDisplay) {
             
             regionCitiesHTML += `
                 <div class="city-group ${isExpanded}">
-                    <div class="city-header">
+                    <div class="city-header" role="button" tabindex="0" aria-expanded="${allExpanded}" onclick="toggleCity('${cityId}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault(); toggleCity('${cityId}');}">
                         <span class="city-title">${escapeHtml(city)} (${cityPlaces.length})</span>
-                        <button class="city-toggle-btn" onclick="toggleCity('${cityId}')">
+                        <button class="city-toggle-btn" onclick="event.stopPropagation(); toggleCity('${cityId}')" aria-label="Toggle city">
                             <span class="toggle-icon">${allExpanded ? '−' : '+'}</span>
                         </button>
                     </div>
@@ -586,9 +586,9 @@ function displayPlaces(placesToDisplay) {
         
         placesHTML += `
             <div class="region-group ${isExpanded}">
-                <div class="region-header">
+                <div class="region-header" role="button" tabindex="0" aria-expanded="${allExpanded}" onclick="toggleRegion('${regionId}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault(); toggleRegion('${regionId}');}">
                     <span class="region-title">${escapeHtml(region)} (${regionPlaces.length})</span>
-                    <button class="region-toggle-btn" onclick="toggleRegion('${regionId}')">
+                    <button class="region-toggle-btn" onclick="event.stopPropagation(); toggleRegion('${regionId}')" aria-label="Toggle region">
                         <span class="toggle-icon">${allExpanded ? '−' : '+'}</span>
                     </button>
                 </div>
@@ -1106,15 +1106,18 @@ function toggleCity(cityId) {
     const cityElement = document.getElementById(cityId);
     const cityGroup = cityElement.parentElement;
     const toggleIcon = cityGroup.querySelector('.toggle-icon');
+    const header = cityGroup.querySelector('.city-header');
     
     if (cityGroup.classList.contains('expanded')) {
         cityGroup.classList.remove('expanded');
         cityGroup.classList.add('collapsed');
         toggleIcon.textContent = '+';
+        if (header) header.setAttribute('aria-expanded', 'false');
     } else {
         cityGroup.classList.remove('collapsed');
         cityGroup.classList.add('expanded');
         toggleIcon.textContent = '−';
+        if (header) header.setAttribute('aria-expanded', 'true');
     }
 }
 
@@ -1123,11 +1126,13 @@ function toggleRegion(regionId) {
     const regionElement = document.getElementById(regionId);
     const regionGroup = regionElement.parentElement;
     const toggleIcon = regionGroup.querySelector('.toggle-icon');
+    const header = regionGroup.querySelector('.region-header');
     
     if (regionGroup.classList.contains('expanded')) {
         regionGroup.classList.remove('expanded');
         regionGroup.classList.add('collapsed');
         toggleIcon.textContent = '+';
+        if (header) header.setAttribute('aria-expanded', 'false');
         
         // Also collapse all cities within this region
         const cityGroups = regionElement.querySelectorAll('.city-group');
@@ -1138,11 +1143,14 @@ function toggleRegion(regionId) {
             if (cityToggleIcon) {
                 cityToggleIcon.textContent = '+';
             }
+            const cityHeader = cityGroup.querySelector('.city-header');
+            if (cityHeader) cityHeader.setAttribute('aria-expanded', 'false');
         });
     } else {
         regionGroup.classList.remove('collapsed');
         regionGroup.classList.add('expanded');
         toggleIcon.textContent = '−';
+        if (header) header.setAttribute('aria-expanded', 'true');
         
         // Also expand all cities within this region if allExpanded is true
         if (allExpanded) {
@@ -1154,6 +1162,8 @@ function toggleRegion(regionId) {
                 if (cityToggleIcon) {
                     cityToggleIcon.textContent = '−';
                 }
+                const cityHeader = cityGroup.querySelector('.city-header');
+                if (cityHeader) cityHeader.setAttribute('aria-expanded', 'true');
             });
         }
     }
@@ -1174,30 +1184,36 @@ function toggleAllCategories() {
     // Toggle all regions
     regionGroups.forEach(group => {
         const toggleIcon = group.querySelector('.toggle-icon');
+            const header = group.querySelector('.region-header');
         
         if (allExpanded) {
             group.classList.remove('collapsed');
             group.classList.add('expanded');
-            toggleIcon.textContent = '−';
+                if (toggleIcon) toggleIcon.textContent = '−';
+                if (header) header.setAttribute('aria-expanded', 'true');
         } else {
             group.classList.remove('expanded');
             group.classList.add('collapsed');
-            toggleIcon.textContent = '+';
+                if (toggleIcon) toggleIcon.textContent = '+';
+                if (header) header.setAttribute('aria-expanded', 'false');
         }
     });
     
     // Toggle all cities
     cityGroups.forEach(group => {
-        const toggleIcon = group.querySelector('.toggle-icon');
+            const toggleIcon = group.querySelector('.toggle-icon');
+            const header = group.querySelector('.city-header');
         
         if (allExpanded) {
             group.classList.remove('collapsed');
             group.classList.add('expanded');
-            toggleIcon.textContent = '−';
+                if (toggleIcon) toggleIcon.textContent = '−';
+                if (header) header.setAttribute('aria-expanded', 'true');
         } else {
             group.classList.remove('expanded');
             group.classList.add('collapsed');
-            toggleIcon.textContent = '+';
+                if (toggleIcon) toggleIcon.textContent = '+';
+                if (header) header.setAttribute('aria-expanded', 'false');
         }
     });
     

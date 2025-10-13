@@ -5,6 +5,22 @@ let baseLayer; // current base tile layer
 let markers = [];
 let currentLanguage = 'he'; // Default to Hebrew
 let allExpanded = false; // Track global expand/collapse state - start collapsed
+// Precise coordinate overrides (key: normalized address). Start with Tel Aviv sample entries.
+const preciseOverrides = {
+    // Format: 'normalized key': [lat, lng]
+    // Add entries like 'דיזינגוף 50 תל אביב': [32.08085, 34.77480]
+};
+
+// Attempt to load external overrides JSON (optional). Non-blocking.
+fetch('telaviv_overrides.json').then(r => {
+    if (!r.ok) return;
+    return r.json();
+}).then(data => {
+    if (data && typeof data === 'object') {
+        Object.assign(preciseOverrides, data);
+        console.log('🔄 Loaded Tel Aviv override coordinates:', Object.keys(data).length);
+    }
+}).catch(()=>{});
 
 // Language translations
 const translations = {
@@ -486,16 +502,20 @@ function parseCSV(csvText) {
             
             console.log(`📝 Parsed fields:`, fields);
             
-            // Extract name, address, link, region and remove quotes
+            // Extract name, address, link, region, lat, lng and remove quotes
             const name = fields[0] ? fields[0].replace(/^"|"$/g, '') : '';
             const address = fields[1] ? fields[1].replace(/^"|"$/g, '') : '';
             const link = fields[2] ? fields[2].replace(/^"|"$/g, '') : '';
             const region = fields[3] ? fields[3].replace(/^"|"$/g, '') : (currentLanguage === 'he' ? 'כללי' : 'General');
+            const latRaw = fields[4] ? fields[4].replace(/^"|"$/g, '') : '';
+            const lngRaw = fields[5] ? fields[5].replace(/^"|"$/g, '') : '';
+            const lat = latRaw && !isNaN(parseFloat(latRaw)) ? parseFloat(latRaw) : null;
+            const lng = lngRaw && !isNaN(parseFloat(lngRaw)) ? parseFloat(lngRaw) : null;
             
             console.log(`✅ Final parsed data:`, { name, address, link, region });
             
             if (name && address) {
-                places.push({ name, address, link, region });
+                places.push({ name, address, link, region, lat, lng });
             }
         }
     }
@@ -730,7 +750,13 @@ async function addMarkersToMap() {
             console.log(`\n🏪 Processing place: ${place.name}`);
             // For demo purposes, we'll use approximate coordinates for Israeli cities
             // In a real app, you'd geocode the addresses or store coordinates in your data
-            const coordinates = getApproximateCoordinates(place.address);
+            // Prefer explicit coordinates if available
+            let coordinates = null;
+            if (place.lat != null && place.lng != null) {
+                coordinates = [place.lat, place.lng];
+            } else {
+                coordinates = getApproximateCoordinates(place.address);
+            }
             
             if (coordinates) {
                 console.log(`📌 Creating marker at:`, coordinates);
@@ -785,6 +811,15 @@ async function addMarkersToMap() {
 // Get approximate coordinates for Israeli locations (for demo purposes)
 function getApproximateCoordinates(address) {
     const addressLower = address.toLowerCase().trim();
+    const normKey = normalizeFullAddress(address);
+    if (preciseOverrides[normKey]) {
+        return preciseOverrides[normKey];
+    }
+    // First try improved Tel Aviv specific logic
+    const telAvivImproved = getImprovedTelAvivCoordinates(address);
+    if (telAvivImproved) {
+        return telAvivImproved;
+    }
     
     // First check for specific Tel Aviv street addresses with more accurate coordinates
     const telAvivStreets = {
@@ -942,6 +977,121 @@ function getApproximateCoordinates(address) {
     console.warn('🔄 Using Tel Aviv as fallback location');
     // Return Tel Aviv center as fallback instead of null for testing
     return [32.0853, 34.7818];
+}
+
+// ===== Improved Tel Aviv Geocoding =====
+// We attempt to place Tel Aviv addresses more accurately by modeling major streets with an origin point,
+// a bearing (approximate direction of the street), and generating an offset based on the street number.
+// This is still approximate but removes random jitter and gives consistent, more plausible positions.
+
+const telAvivStreetModels = (() => {
+    // Central reference points (rough midpoints of streets) with approximate bearings (degrees from East counter‑clockwise)
+    // bearing 0 = East-West (increasing lng), 90 = North-South (increasing lat)
+    return [
+        { names: ['דיזינגוף','dizengoff','דיזנגוף'], lat:32.0809, lng:34.7736, bearing: 5, base:1 },
+        { names: ['אבן גבירול','ibn gvirol','אבן גבריאל','ibn gabirol'], lat:32.0799, lng:34.7813, bearing: 1, base:1 },
+        { names: ['אלנבי','allenby','אלנבי'], lat:32.0676, lng:34.7702, bearing: -5, base:1 },
+        { names: ['המלך ג׳ורג','המלך ג\'ורג','king george','מלך ג׳ורג'], lat:32.0707, lng:34.7741, bearing: -10, base:1 },
+        { names: ['רוטשילד','rothschild'], lat:32.0648, lng:34.7767, bearing: -15, base:1 },
+        { names: ['פרישמן','frishman'], lat:32.0803, lng:34.7728, bearing: -85, base:1 },
+        { names: ['בוגרשוב','bograshov'], lat:32.0773, lng:34.7705, bearing: -85, base:1 },
+        { names: ['בן יהודה','ben yehuda'], lat:32.0815, lng:34.7682, bearing: 4, base:1 },
+        { names: ['שינקין','sheinkin','שינקיין'], lat:32.0685, lng:34.7725, bearing: -80, base:1 },
+        { names: ['ירמיהו','yirmiyahu'], lat:32.0900, lng:34.7821, bearing: 0, base:1 },
+        { names: ['באזל','basel'], lat:32.0895, lng:34.7779, bearing: 100, base:1 },
+        { names: ['לוונטין','levontin','לבונטין'], lat:32.0615, lng:34.7754, bearing: -70, base:1 },
+        { names: ['נחלת בנימין','nahalat benyamin','nahalat benjamin'], lat:32.0662, lng:34.7706, bearing: -10, base:1 },
+        { names: ['הארבעה','haarbaa','ha\'arbaa'], lat:32.0717, lng:34.7869, bearing: 90, base:1 },
+        { names: ['ארלוזורוב','arlozorov'], lat:32.0884, lng:34.7827, bearing: 90, base:1 },
+        { names: ['וושינגטון','washington'], lat:32.0568, lng:34.7702, bearing: 100, base:1 },
+        { names: ['המסגר','hamasguer','המסגר'], lat:32.0617, lng:34.7811, bearing: 15, base:1 }
+    ];
+})();
+
+// Higher precision per-street segment interpolation (subset of key arteries)
+// Each segment: street canonical name array, minHouse, maxHouse, start(lat,lng), end(lat,lng)
+// We map the house number proportionally along the segment line.
+const telAvivStreetSegments = [
+    { names:['אבן גבירול','ibn gvirol'], min:1, max:200, start:[32.0719,34.7799], end:[32.0942,34.7825] },
+    { names:['דיזינגוף','dizengoff','דיזנגוף'], min:1, max:300, start:[32.0639,34.7710], end:[32.0960,34.7749] },
+    { names:['אלנבי','allenby'], min:1, max:150, start:[32.0614,34.7700], end:[32.0729,34.7677] },
+    { names:['רוטשילד','rothschild'], min:1, max:200, start:[32.0590,34.7721], end:[32.0738,34.7802] },
+    { names:['בן יהודה','ben yehuda'], min:1, max:250, start:[32.0667,34.7660], end:[32.1000,34.7691] },
+    { names:['פרישמן','frishman'], min:1, max:120, start:[32.0803,34.7681], end:[32.0806,34.7769] },
+    { names:['בוגרשוב','bograshov'], min:1, max:120, start:[32.0773,34.7679], end:[32.0775,34.7758] }
+];
+
+function normalizeStreet(str) {
+    return str
+        .replace(/["׳'’]/g,'')
+        .replace(/\s+/g,' ')
+        .trim()
+        .toLowerCase();
+}
+
+function extractStreetNumber(address) {
+    // Match patterns like "דיזינגוף 120" or "דיזינגוף 120, תל אביב"
+    // Hebrew letters, spaces, apostrophes, then number
+    const streetNumberRegex = /([\u0590-\u05FFa-zA-Z\s"׳'’\.\-]+?)\s+(\d{1,4})/;
+    const match = address.match(streetNumberRegex);
+    if (match) {
+        return { street: match[1].trim(), number: parseInt(match[2], 10) };
+    }
+    return null;
+}
+
+function getImprovedTelAvivCoordinates(address) {
+    if (!address) return null;
+    // Detect Tel Aviv (various forms) in address
+    const telAvivPatterns = ['תל אביב','tel aviv'];
+    const lower = address.toLowerCase();
+    if (!telAvivPatterns.some(p => lower.includes(p))) return null;
+
+    // Try extracting street + number
+    const sn = extractStreetNumber(address);
+    if (!sn) return null; // fallback to legacy logic
+    const normStreet = normalizeStreet(sn.street);
+
+    const number = sn.number;
+    // 1) Try segment interpolation first
+    for (const seg of telAvivStreetSegments) {
+        if (seg.names.some(n => normStreet.includes(normalizeStreet(n)))) {
+            if (number >= seg.min && number <= seg.max) {
+                const ratio = (number - seg.min) / (seg.max - seg.min);
+                const lat = seg.start[0] + (seg.end[0] - seg.start[0]) * ratio;
+                const lng = seg.start[1] + (seg.end[1] - seg.start[1]) * ratio;
+                const pos = [lat, lng];
+                console.debug('ℹ️ TA segment result', { address, pos });
+                return pos;
+            }
+        }
+    }
+
+    // 2) Fallback to older bearing model (coarser)
+    let model = null;
+    for (const m of telAvivStreetModels) {
+        if (m.names.some(n => normStreet.includes(normalizeStreet(n)))) { model = m; break; }
+    }
+    if (!model) return null;
+    if (number > 800 || number < 1) return null;
+    const diff = (number - model.base);
+    const stepDeg = 0.000012;
+    const distance = diff * stepDeg;
+    const rad = model.bearing * Math.PI / 180;
+    const dx = Math.cos(rad) * distance;
+    const dy = Math.sin(rad) * distance;
+    const scaleLon = Math.cos(model.lat * Math.PI / 180);
+    const final = [model.lat + dy, model.lng + dx / (scaleLon || 1)];
+    console.debug('ℹ️ TA bearing model result', { address, final });
+    return final;
+}
+
+function normalizeFullAddress(address) {
+    return address
+        .replace(/["'׳’]/g,'')
+        .replace(/\s+/g,' ') 
+        .trim()
+        .toLowerCase();
 }
 
 // Utility function to escape HTML
@@ -1156,3 +1306,10 @@ function sendTestEmail() {
             alert('Test email failed: ' + error.text);
         });
 }
+
+// Developer helper: list places lacking explicit coordinates
+window.listPlacesNeedingCoords = function() {
+    const needing = places.filter(p => p.lat == null || p.lng == null).map(p => p.name + ' | ' + p.address);
+    console.table(needing);
+    console.log(`${needing.length} places still rely on heuristic geocoding.`);
+};

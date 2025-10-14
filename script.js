@@ -53,7 +53,8 @@ const translations = {
     subscribeSubmit: 'הרשמה',
     subscribeSuccess: 'נרשמתם בהצלחה! תודה.',
     subscribeExists: 'אתם כבר רשומים לקבלת עדכונים.',
-    subscribeError: 'אירעה שגיאה בהרשמה. נסו שוב או פנו אלינו.'
+    subscribeError: 'אירעה שגיאה בהרשמה. נסו שוב או פנו אלינו.',
+    openingHours: 'שעות פתיחה'
     },
     en: {
         title: 'Vegan Places in Israel',
@@ -84,7 +85,8 @@ const translations = {
         subscribeSubmit: 'Subscribe',
         subscribeSuccess: 'You are subscribed. Thank you!',
         subscribeExists: 'You are already subscribed.',
-        subscribeError: 'There was an error subscribing. Please try again or contact us.'
+        subscribeError: 'There was an error subscribing. Please try again or contact us.',
+        openingHours: 'Hours'
     }
 };
 
@@ -502,26 +504,92 @@ function parseCSV(csvText) {
             
             console.log(`📝 Parsed fields:`, fields);
             
-            // Extract name, address, link, region, lat, lng and remove quotes
+            // Extract name, address, link, region, lat, lng, hours and remove quotes
             const name = fields[0] ? fields[0].replace(/^"|"$/g, '') : '';
             const address = fields[1] ? fields[1].replace(/^"|"$/g, '') : '';
             const link = fields[2] ? fields[2].replace(/^"|"$/g, '') : '';
             const region = fields[3] ? fields[3].replace(/^"|"$/g, '') : (currentLanguage === 'he' ? 'כללי' : 'General');
             const latRaw = fields[4] ? fields[4].replace(/^"|"$/g, '') : '';
             const lngRaw = fields[5] ? fields[5].replace(/^"|"$/g, '') : '';
+            const hoursRaw = fields[6] ? fields[6].replace(/^"|"$/g, '') : '';
             const lat = latRaw && !isNaN(parseFloat(latRaw)) ? parseFloat(latRaw) : null;
             const lng = lngRaw && !isNaN(parseFloat(lngRaw)) ? parseFloat(lngRaw) : null;
             
             console.log(`✅ Final parsed data:`, { name, address, link, region });
             
             if (name && address) {
-                places.push({ name, address, link, region, lat, lng });
+                const schedule = parseOpeningHoursSchedule(hoursRaw);
+                places.push({ name, address, link, region, lat, lng, hours: hoursRaw, schedule });
             }
         }
     }
     
     console.log(`📊 Total places parsed: ${places.length}`);
     return places;
+}
+
+// Parse Google-style opening hours string into structured schedule
+// Expected examples:
+// "Mon-Fri 09:00-17:00; Sat 10:00-14:00; Sun Closed"
+// "Mon-Thu 11:00-23:00; Fri 11:00-15:00; Sat 19:00-23:30; Sun 11:00-23:00"
+// Returns: { Mon:[{opens:'09:00',closes:'17:00'}], Tue:[...], ... }
+function parseOpeningHoursSchedule(hoursString) {
+    if (!hoursString || !/[A-Za-z]{3}/.test(hoursString)) return null;
+    const dayKeys = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+    const schedule = {};
+    dayKeys.forEach(d => schedule[d] = []);
+    // Split by semicolons
+    const parts = hoursString.split(';').map(p => p.trim()).filter(Boolean);
+    const dayPattern = /^(Mon|Tue|Wed|Thu|Fri|Sat|Sun)(?:-(Mon|Tue|Wed|Thu|Fri|Sat|Sun))?/;
+    parts.forEach(part => {
+        const match = part.match(dayPattern);
+        if (!match) return;
+        const startDay = match[1];
+        const endDay = match[2] || startDay;
+        // Extract time range or Closed
+        const rest = part.replace(dayPattern, '').trim();
+        if (!rest) return;
+        // Determine included days sequence
+        const startIndex = dayKeys.indexOf(startDay);
+        const endIndex = dayKeys.indexOf(endDay);
+        let targetDays = [];
+        if (startIndex <= endIndex) {
+            targetDays = dayKeys.slice(startIndex, endIndex + 1);
+        } else { // wrap-around just in case
+            targetDays = dayKeys.slice(startIndex).concat(dayKeys.slice(0, endIndex + 1));
+        }
+        if (/closed/i.test(rest)) {
+            // Explicit closed: ensure empty array (already default)
+            return;
+        }
+        // A part could contain multiple comma separated ranges (rare). Split by ','
+        rest.split(',').map(r => r.trim()).forEach(range => {
+            const times = range.split('-').map(x => x.trim());
+            if (times.length === 2 && /^\d{1,2}:\d{2}$/.test(times[0]) && /^\d{1,2}:\d{2}$/.test(times[1])) {
+                targetDays.forEach(d => schedule[d].push({ opens: times[0], closes: times[1] }));
+            }
+        });
+    });
+    // If every day empty -> return null to fallback
+    const any = Object.values(schedule).some(arr => arr.length);
+    return any ? schedule : null;
+}
+
+function buildOpeningHoursSpecification(schedule) {
+    const spec = [];
+    const weekMap = { Mon:'Monday', Tue:'Tuesday', Wed:'Wednesday', Thu:'Thursday', Fri:'Friday', Sat:'Saturday', Sun:'Sunday' };
+    Object.entries(schedule).forEach(([day, ranges]) => {
+        if (!ranges || ranges.length === 0) return; // closed
+        ranges.forEach(r => {
+            spec.push({
+                "@type": "OpeningHoursSpecification",
+                "dayOfWeek": weekMap[day],
+                "opens": r.opens,
+                "closes": r.closes
+            });
+        });
+    });
+    return spec.length ? spec : undefined;
 }
 
 // Display places in list view
@@ -570,15 +638,20 @@ function displayPlaces(placesToDisplay) {
                         </button>
                     </div>
                     <div class="city-places" id="${cityId}">
-                        ${cityPlaces.map(place => `
+                        ${cityPlaces.map(place => {
+                            const condensed = place.schedule ? getCondensedWeeklyLabel(place.schedule) : null;
+                            const displayLabel = condensed || getTodayHoursLabel(place);
+                            const fullTitle = place.schedule ? formatFullScheduleTooltip(place) : (place.hours || '');
+                            return `
                             <div class="place-card">
                                 <div class="place-info">
                                     <div class="place-name">${escapeHtml(place.name)}</div>
                                     <div class="place-address">${escapeHtml(place.address)}</div>
                                 </div>
+                                ${displayLabel ? `<div class="place-hours" title="${escapeHtml(fullTitle)}">${displayLabel}</div>` : ''}
                                 ${place.link ? `<a href="${escapeHtml(place.link)}" target="_blank" class="place-link">${t.visitWebsite}</a>` : ''}
-                            </div>
-                        `).join('')}
+                            </div>`;
+                        }).join('')}
                     </div>
                 </div>
             `;
@@ -681,6 +754,86 @@ function extractCityFromAddress(address) {
     
     // If it's a single word/phrase (like "גבעת השלושה"), treat it as the city name
     return address.trim();
+}
+
+// Helpers for opening hours rendering
+const dayOrder = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+const dayNames = {
+    he: { Mon:'שני', Tue:'שלישי', Wed:'רביעי', Thu:'חמישי', Fri:'שישי', Sat:'שבת', Sun:'ראשון' },
+    en: { Mon:'Mon', Tue:'Tue', Wed:'Wed', Thu:'Thu', Fri:'Fri', Sat:'Sat', Sun:'Sun' }
+};
+
+function getTodayHoursLabel(place) {
+    if (!place) return '';
+    const now = new Date();
+    const jsDay = now.getDay(); // 0=Sun
+    const map = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+    const todayKey = map[jsDay];
+    const hebrewDay = dayNames.he[todayKey];
+    if (place.schedule && place.schedule[todayKey] && place.schedule[todayKey].length) {
+        const ranges = place.schedule[todayKey].map(r => `${r.opens}-${r.closes}`).join(', ');
+        return `${hebrewDay} ${ranges}`;
+    }
+    if (place.schedule) return `${hebrewDay} סגור`;
+    if (place.hours) {
+        return `${hebrewDay} ${place.hours}`;
+    }
+    return '';
+}
+
+function formatFullScheduleTooltip(place) {
+    if (!place.schedule) return place.hours || '';
+    const lines = [];
+    dayOrder.forEach(d => {
+        const name = dayNames.he[d];
+        const entries = place.schedule[d];
+        if (!entries || entries.length === 0) {
+            lines.push(`${name}: סגור`);
+        } else {
+            lines.push(`${name}: ${entries.map(r => `${r.opens}-${r.closes}`).join(', ')}`);
+        }
+    });
+    return lines.join('\n');
+}
+
+// Build condensed weekly label like: "א-ה 08:00-23:00; ו 08:00-15:00; ש 09:30-23:30"
+function getCondensedWeeklyLabel(schedule) {
+    if (!schedule) return null;
+    // Convert schedule into array of {dayKey, nameHe, ranges:["HH:MM-HH:MM", ...] or 'סגור'}
+    const daySeq = dayOrder; // Mon..Sun
+    const items = daySeq.map(k => {
+        const ranges = schedule[k];
+        if (!ranges || ranges.length === 0) return { k, status: 'closed', label: 'סגור' };
+        return { k, status: 'open', label: ranges.map(r => `${r.opens}-${r.closes}`).join(',') };
+    });
+    // Group consecutive days with identical label
+    const groups = [];
+    let current = null;
+    items.forEach(it => {
+        const sig = it.status + '|' + it.label;
+        if (!current || current.sig !== sig) {
+            if (current) groups.push(current);
+            current = { sig, label: it.label, status: it.status, days: [it.k] };
+        } else {
+            current.days.push(it.k);
+        }
+    });
+    if (current) groups.push(current);
+    // Map day key to Hebrew short letter(s):
+    const hebShort = { Mon:'ב', Tue:'ג', Wed:'ד', Thu:'ה', Fri:'ו', Sat:'ש', Sun:'א' }; // Use first letter (Hebrew week often starts Sunday א)
+    const hebOrder = { Sun:0, Mon:1, Tue:2, Wed:3, Thu:4, Fri:5, Sat:6 };
+    const partStrings = groups.map(g => {
+        // Sort days according to hebOrder just in case
+        g.days.sort((a,b)=>hebOrder[a]-hebOrder[b]);
+        const first = g.days[0];
+        const last = g.days[g.days.length-1];
+        const rangeStr = g.days.length > 1 ? `${hebShort[first]}-${hebShort[last]}` : hebShort[first];
+        if (g.status === 'closed') return `<span class="ph-day">${rangeStr}</span> <span class="ph-time ph-closed">סגור</span>`;
+        // Replace commas between multiple ranges with ' / '
+        const label = g.label.replace(/,/g,' / ');
+        return `<span class="ph-day">${rangeStr}</span> <span class="ph-time">${label}</span>`;
+    });
+    return partStrings.join('<br>');
 }
 
 // Filter places based on search input
@@ -1255,7 +1408,10 @@ function generateStructuredData() {
                     "@type": "AggregateRating",
                     "ratingValue": "4.5",
                     "reviewCount": "1"
-                }
+                },
+                // Basic opening hours fallback to a generic daily specification if provided
+                "openingHours": place.hours || undefined,
+                "openingHoursSpecification": place.schedule ? buildOpeningHoursSpecification(place.schedule) : (place.hours ? undefined : undefined)
             };
         }).filter(item => item.geo !== undefined) // Only include items with valid coordinates
     };

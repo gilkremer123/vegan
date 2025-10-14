@@ -356,6 +356,7 @@ main {
     border-radius: 8px;
     border: 1px solid #e9ecef;
     transition: transform 0.2s ease, box-shadow 0.2s ease;
+    position: relative; /* enable absolute positioning for hours */
 }
 
 .place-card:hover {
@@ -391,6 +392,42 @@ main {
 .place-link:hover {
     background: #45a049;
 }
+
+/* Opening hours badge */
+.place-hours {
+    position: absolute;
+    top: 1.65rem; /* slight additional downward adjustment for visual baseline alignment */
+    font-size: 0.7rem;
+    background: linear-gradient(135deg,#FF9800,#F57C00);
+    color: #fff;
+    padding: 0.25rem 0.55rem; /* slightly tighter vertical padding after shift */
+    border-radius: 6px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+    opacity: 0.95;
+    pointer-events: none;
+    max-width: 165px;
+    line-height: 1.15;
+    white-space: normal;
+    /* Allow full height for all schedule lines */
+    max-height: none;
+    overflow: visible;
+}
+[dir="rtl"] .place-hours, [dir="ltr"] .place-hours {
+    display: inline-block;
+}
+
+.place-hours .ph-day { font-weight:700; display:inline-block; min-width:1.8em; text-align:right; }
+.place-hours .ph-time { display:inline-block; direction:ltr; text-align:left; font-weight:500; }
+.place-hours .ph-closed { opacity:0.85; }
+
+/* Force each group line to behave like its own row */
+.place-hours br { content:""; }
+[dir="rtl"] .place-hours { left: 0.9rem; }
+[dir="ltr"] .place-hours { right: 0.9rem; }
+
+.place-card:hover .place-hours { opacity: 1; }
 
 /* Language-specific text alignment */
 [dir="rtl"] .place-card {

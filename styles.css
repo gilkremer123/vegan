@@ -134,6 +134,35 @@ main {
     gap: 1rem;
 }
 
+.search-container {
+    display: flex;
+    gap: 0.5rem;
+    align-items: stretch;
+}
+
+.filter-open-btn {
+    background: #4CAF50;
+    color: white;
+    border: none;
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+    flex: 0 0 33.33%; /* Takes exactly 1/3 of the width */
+    font-weight: 500;
+}
+
+.filter-open-btn:hover {
+    background: #45a049;
+}
+
+.filter-open-btn.active {
+    background: #2E7D32;
+    transform: scale(0.98);
+}
+
 .button-row {
     display: flex;
     gap: 1rem;
@@ -141,7 +170,7 @@ main {
 }
 
 #searchInput {
-    width: 100%;
+    flex: 1; /* Takes remaining space (2/3) */
     padding: 0.75rem;
     border: 2px solid #ddd;
     border-radius: 8px;
@@ -500,6 +529,15 @@ main {
     text-align: left;
 }
 
+/* RTL support for search container */
+[dir="rtl"] .search-container {
+    flex-direction: row-reverse;
+}
+
+[dir="ltr"] .search-container {
+    flex-direction: row;
+}
+
 /* Map View Styles */
 #map {
     width: 100%;
@@ -633,6 +671,22 @@ main {
         align-items: stretch;
     }
     
+    .search-container {
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+    
+    .filter-open-btn {
+        order: -1; /* Place filter button above search input on mobile */
+        flex: none;
+        width: 100%;
+    }
+    
+    [dir="rtl"] .search-container,
+    [dir="ltr"] .search-container {
+        flex-direction: column; /* Override RTL flex-direction on mobile */
+    }
+
     .button-row {
         flex-direction: row; /* Keep buttons on same line */
         gap: 0.5rem;

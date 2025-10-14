@@ -56,7 +56,8 @@ const translations = {
     subscribeError: 'אירעה שגיאה בהרשמה. נסו שוב או פנו אלינו.',
     openingHours: 'שעות פתיחה',
     openNow: 'פתוח עכשיו',
-    closedNow: 'סגור עכשיו'
+    closedNow: 'סגור עכשיו',
+    filterOpenNow: 'פתוח עכשיו'
     },
     en: {
         title: 'Vegan Places in Israel',
@@ -90,7 +91,8 @@ const translations = {
         subscribeError: 'There was an error subscribing. Please try again or contact us.',
         openingHours: 'Hours',
         openNow: 'Open now',
-        closedNow: 'Closed now'
+        closedNow: 'Closed now',
+        filterOpenNow: 'Open now'
     }
 };
 
@@ -105,7 +107,9 @@ const contactBtn = document.getElementById('contactBtn');
 const toggleAllBtn = document.getElementById('toggleAllBtn');
 const subscribeBtn = document.getElementById('subscribeBtn');
 const subscribeModal = document.getElementById('subscribeModal');
+const filterOpenBtn = document.getElementById('filterOpenBtn');
 let subscriptionSending = false;
+let filterOpenOnly = false; // Track if filter is active
 
 // Initialize the application
 document.addEventListener('DOMContentLoaded', function() {
@@ -177,6 +181,7 @@ function setupEventListeners() {
     contactBtn.addEventListener('click', openContactModal);
     toggleAllBtn.addEventListener('click', toggleAllCategories);
     if (subscribeBtn) subscribeBtn.addEventListener('click', openSubscribeModal);
+    if (filterOpenBtn) filterOpenBtn.addEventListener('click', toggleOpenFilter);
     
     // Add event listener for email contact button in modal
     document.getElementById('emailContactBtn').addEventListener('click', openContactEmail);
@@ -966,19 +971,34 @@ function getCondensedWeeklyLabel(schedule) {
     return partStrings.join('<br>');
 }
 
+// Toggle open filter
+function toggleOpenFilter() {
+    filterOpenOnly = !filterOpenOnly;
+    filterOpenBtn.classList.toggle('active', filterOpenOnly);
+    filterPlaces(); // Re-apply filtering
+}
+
 // Filter places based on search input
 function filterPlaces() {
     const searchTerm = searchInput.value.toLowerCase().trim();
     
-    if (!searchTerm) {
-        displayPlaces(places);
-        return;
+    let filteredPlaces = places;
+    
+    // Apply search filter
+    if (searchTerm) {
+        filteredPlaces = filteredPlaces.filter(place => 
+            place.name.toLowerCase().includes(searchTerm) ||
+            place.address.toLowerCase().includes(searchTerm)
+        );
     }
     
-    const filteredPlaces = places.filter(place => 
-        place.name.toLowerCase().includes(searchTerm) ||
-        place.address.toLowerCase().includes(searchTerm)
-    );
+    // Apply open filter
+    if (filterOpenOnly) {
+        filteredPlaces = filteredPlaces.filter(place => {
+            if (!place.schedule) return false; // No hours = can't determine if open
+            return isPlaceOpenNow(place.schedule);
+        });
+    }
     
     displayPlaces(filteredPlaces);
 }

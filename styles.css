@@ -378,6 +378,32 @@ main {
     line-height: 1.4;
 }
 
+.place-street {
+    margin-bottom: 0.2rem;
+}
+
+.place-city {
+    color: #888;
+    font-size: 0.9em;
+}
+
+.place-bottom {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+/* RTL layout for Hebrew */
+[dir="rtl"] .place-bottom {
+    flex-direction: row;
+}
+
+[dir="ltr"] .place-bottom {
+    flex-direction: row;
+}
+
 .place-link {
     display: inline-block;
     background: #4CAF50;
@@ -428,6 +454,42 @@ main {
 [dir="ltr"] .place-hours { right: 0.9rem; }
 
 .place-card:hover .place-hours { opacity: 1; }
+
+/* Open / Closed status */
+.open-status { 
+    font-size: 0.72rem; 
+    font-weight: 600; 
+    display: flex; 
+    align-items: center; 
+    gap: 0.4rem; 
+}
+.open-status .dot { 
+    width: 8px; 
+    height: 8px; 
+    border-radius: 50%; 
+    display: inline-block; 
+}
+.open-status.open { 
+    color: #1B5E20; 
+}
+.open-status.open .dot { 
+    background: #2E7D32; 
+    box-shadow: 0 0 4px rgba(46,125,50,0.6); 
+}
+.open-status.closed { 
+    color: #B71C1C; 
+    opacity: 0.9; 
+}
+.open-status.closed .dot { 
+    background: #D32F2F; 
+    box-shadow: 0 0 4px rgba(211,47,47,0.5); 
+}
+[dir="rtl"] .open-status { 
+    justify-content: flex-start; 
+}
+[dir="ltr"] .open-status { 
+    justify-content: flex-start; 
+}
 
 /* Language-specific text alignment */
 [dir="rtl"] .place-card {

@@ -54,7 +54,9 @@ const translations = {
     subscribeSuccess: 'נרשמתם בהצלחה! תודה.',
     subscribeExists: 'אתם כבר רשומים לקבלת עדכונים.',
     subscribeError: 'אירעה שגיאה בהרשמה. נסו שוב או פנו אלינו.',
-    openingHours: 'שעות פתיחה'
+    openingHours: 'שעות פתיחה',
+    openNow: 'פתוח עכשיו',
+    closedNow: 'סגור עכשיו'
     },
     en: {
         title: 'Vegan Places in Israel',
@@ -86,7 +88,9 @@ const translations = {
         subscribeSuccess: 'You are subscribed. Thank you!',
         subscribeExists: 'You are already subscribed.',
         subscribeError: 'There was an error subscribing. Please try again or contact us.',
-        openingHours: 'Hours'
+        openingHours: 'Hours',
+        openNow: 'Open now',
+        closedNow: 'Closed now'
     }
 };
 
@@ -128,7 +132,42 @@ document.addEventListener('DOMContentLoaded', function() {
         // Force map mode after initial render tick
         setTimeout(() => { if (typeof toggleMode === 'function' && currentMode === 'list') toggleMode(); }, 50);
     }
+    
+    // Update open/closed status every minute
+    setInterval(updateOpenClosedStatus, 60000);
 });
+
+// Function to update only the open/closed status without full re-render
+function updateOpenClosedStatus() {
+    const now = new Date();
+    document.querySelectorAll('.place-card').forEach(card => {
+        const name = card.getAttribute('data-place-name');
+        const placeObj = places.find(p => p.name === name);
+        if (!placeObj || !placeObj.schedule) return;
+        
+        const statusEl = card.querySelector('.open-status');
+        if (!statusEl) return;
+        
+        const status = isPlaceOpenNow(placeObj.schedule, now);
+        const t = translations[currentLanguage];
+        
+        if (status === null) {
+            statusEl.style.display = 'none';
+            return;
+        }
+        
+        // Update class and content
+        statusEl.className = 'open-status';
+        if (status) {
+            statusEl.classList.add('open');
+            statusEl.innerHTML = `<span class="dot"></span>${t.openNow}`;
+        } else {
+            statusEl.classList.add('closed');
+            statusEl.innerHTML = `<span class="dot"></span>${t.closedNow}`;
+        }
+        statusEl.style.display = 'flex';
+    });
+}
 
 // Setup event listeners
 function setupEventListeners() {
@@ -534,7 +573,17 @@ function parseCSV(csvText) {
 // "Mon-Thu 11:00-23:00; Fri 11:00-15:00; Sat 19:00-23:30; Sun 11:00-23:00"
 // Returns: { Mon:[{opens:'09:00',closes:'17:00'}], Tue:[...], ... }
 function parseOpeningHoursSchedule(hoursString) {
-    if (!hoursString || !/[A-Za-z]{3}/.test(hoursString)) return null;
+    if (!hoursString) return null;
+    // Fallback: unlabeled single range like "10:00-22:00" => apply to all days
+    const simpleRangeMatch = hoursString.trim().match(/^(\d{1,2}:\d{2})\s*-\s*(\d{1,2}:\d{2})$/);
+    if (simpleRangeMatch) {
+        const [_, openT, closeT] = simpleRangeMatch;
+        const dayKeysAll = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+        const sched = {};
+        dayKeysAll.forEach(d => sched[d] = [{ opens: openT, closes: closeT }]);
+        return sched;
+    }
+    if (!/[A-Za-z]{3}/.test(hoursString)) return null;
     const dayKeys = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
     const schedule = {};
     dayKeys.forEach(d => schedule[d] = []);
@@ -553,9 +602,15 @@ function parseOpeningHoursSchedule(hoursString) {
         const startIndex = dayKeys.indexOf(startDay);
         const endIndex = dayKeys.indexOf(endDay);
         let targetDays = [];
-        if (startIndex <= endIndex) {
+        
+        // Special handling for Sun-Thu, Sun-Fri, etc.
+        if (startDay === 'Sun' && ['Mon','Tue','Wed','Thu','Fri'].includes(endDay)) {
+            // For Sun-Thu: Sunday + Mon through Thu
+            const endIdx = dayKeys.indexOf(endDay);
+            targetDays = ['Sun'].concat(dayKeys.slice(0, endIdx + 1));
+        } else if (startIndex <= endIndex) {
             targetDays = dayKeys.slice(startIndex, endIndex + 1);
-        } else { // wrap-around just in case
+        } else { // wrap-around case (e.g., Fri-Mon)
             targetDays = dayKeys.slice(startIndex).concat(dayKeys.slice(0, endIndex + 1));
         }
         if (/closed/i.test(rest)) {
@@ -590,6 +645,51 @@ function buildOpeningHoursSpecification(schedule) {
         });
     });
     return spec.length ? spec : undefined;
+}
+
+// Determine if a place is open now given its schedule
+function isPlaceOpenNow(schedule, now = new Date()) {
+    if (!schedule) return null; // unknown
+    // Map JS day (0=Sun) to schedule key
+    const dayKeys = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+    const key = dayKeys[now.getDay()];
+    const ranges = schedule[key] || [];
+    if (!ranges.length) return false;
+    const currentMinutes = now.getHours() * 60 + now.getMinutes();
+    for (const r of ranges) {
+        const [oh, om] = r.opens.split(':').map(Number);
+        const [ch, cm] = r.closes.split(':').map(Number);
+        const start = oh * 60 + om;
+        const end = ch * 60 + cm;
+        if (end > start) {
+            if (currentMinutes >= start && currentMinutes < end) return true;
+        } else { // overnight (rare; treat spans midnight)
+            if (currentMinutes >= start || currentMinutes < end) return true;
+        }
+    }
+    return false;
+}
+
+function buildOpenStatusElement(schedule) {
+    const status = isPlaceOpenNow(schedule);
+    const t = translations[currentLanguage];
+    const span = document.createElement('div');
+    span.className = 'open-status';
+    
+    // Always show status if we have a schedule
+    if (status === null) {
+        span.style.display = 'none';
+        return span;
+    }
+    
+    if (status) {
+        span.classList.add('open');
+        span.innerHTML = `<span class="dot"></span>${t.openNow}`;
+    } else {
+        span.classList.add('closed');
+        span.innerHTML = `<span class="dot"></span>${t.closedNow}`;
+    }
+    return span;
 }
 
 // Display places in list view
@@ -642,14 +742,26 @@ function displayPlaces(placesToDisplay) {
                             const condensed = place.schedule ? getCondensedWeeklyLabel(place.schedule) : null;
                             const displayLabel = condensed || getTodayHoursLabel(place);
                             const fullTitle = place.schedule ? formatFullScheduleTooltip(place) : (place.hours || '');
+                            
+                            // Split address into street and city
+                            const addressParts = place.address.split(', ');
+                            const street = addressParts[0] || '';
+                            const city = addressParts.slice(1).join(', ') || '';
+                            
                             return `
-                            <div class="place-card">
+                            <div class="place-card" data-place-name="${escapeHtml(place.name)}">
                                 <div class="place-info">
                                     <div class="place-name">${escapeHtml(place.name)}</div>
-                                    <div class="place-address">${escapeHtml(place.address)}</div>
+                                    <div class="place-address">
+                                        <div class="place-street">${escapeHtml(street)}</div>
+                                        ${city ? `<div class="place-city">${escapeHtml(city)}</div>` : ''}
+                                    </div>
+                                    <div class="place-bottom">
+                                        <div class="open-status" data-open-status></div>
+                                        ${place.link ? `<a href="${escapeHtml(place.link)}" target="_blank" class="place-link">${t.visitWebsite}</a>` : ''}
+                                    </div>
                                 </div>
                                 ${displayLabel ? `<div class="place-hours" title="${escapeHtml(fullTitle)}">${displayLabel}</div>` : ''}
-                                ${place.link ? `<a href="${escapeHtml(place.link)}" target="_blank" class="place-link">${t.visitWebsite}</a>` : ''}
                             </div>`;
                         }).join('')}
                     </div>
@@ -673,6 +785,20 @@ function displayPlaces(placesToDisplay) {
     });
     
     placesList.innerHTML = placesHTML;
+    
+    // After injecting HTML, populate open/closed statuses
+    requestAnimationFrame(() => {
+        const now = new Date();
+        document.querySelectorAll('.place-card').forEach(card => {
+            const name = card.getAttribute('data-place-name');
+            const placeObj = places.find(p => p.name === name);
+            if (!placeObj) return;
+            const container = card.querySelector('[data-open-status]');
+            if (!container) return;
+            const statusEl = buildOpenStatusElement(placeObj.schedule);
+            container.replaceWith(statusEl);
+        });
+    });
 }
 
 // Group places by region
@@ -800,18 +926,22 @@ function formatFullScheduleTooltip(place) {
 function getCondensedWeeklyLabel(schedule) {
     if (!schedule) return null;
     // Convert schedule into array of {dayKey, nameHe, ranges:["HH:MM-HH:MM", ...] or 'סגור'}
-    const daySeq = dayOrder; // Mon..Sun
+    // Use Sunday-first order to properly group Sun-Thu patterns
+    const daySeq = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
     const items = daySeq.map(k => {
         const ranges = schedule[k];
         if (!ranges || ranges.length === 0) return { k, status: 'closed', label: 'סגור' };
         return { k, status: 'open', label: ranges.map(r => `${r.opens}-${r.closes}`).join(',') };
     });
-    // Group consecutive days with identical label
+    // Group consecutive days with identical label, but keep Fri/Sat separate
     const groups = [];
     let current = null;
     items.forEach(it => {
         const sig = it.status + '|' + it.label;
-        if (!current || current.sig !== sig) {
+        // Always break grouping for Friday and Saturday - they should be separate
+        const shouldBreakGroup = !current || current.sig !== sig || it.k === 'Fri' || it.k === 'Sat';
+        
+        if (shouldBreakGroup) {
             if (current) groups.push(current);
             current = { sig, label: it.label, status: it.status, days: [it.k] };
         } else {

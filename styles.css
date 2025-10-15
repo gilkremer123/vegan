@@ -672,19 +672,29 @@ main {
     }
     
     .search-container {
-        flex-direction: column;
-        gap: 0.75rem;
+        flex-direction: row; /* Keep side by side on mobile */
+        gap: 0.5rem;
     }
     
     .filter-open-btn {
-        order: -1; /* Place filter button above search input on mobile */
-        flex: none;
-        width: 100%;
+        flex: 0 0 40%; /* Take 40% width on mobile for better tap target */
+        font-size: 0.85rem;
+        padding: 0.7rem 0.5rem;
+        white-space: nowrap;
+    }
+    
+    #searchInput {
+        flex: 1; /* Take remaining 60% */
+        font-size: 0.9rem;
     }
     
     [dir="rtl"] .search-container,
     [dir="ltr"] .search-container {
-        flex-direction: column; /* Override RTL flex-direction on mobile */
+        flex-direction: row; /* Keep row direction for both RTL and LTR on mobile */
+    }
+    
+    [dir="rtl"] .search-container {
+        flex-direction: row-reverse; /* Maintain RTL order on mobile */
     }
 
     .button-row {

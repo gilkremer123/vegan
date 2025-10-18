@@ -141,7 +141,7 @@ main {
 }
 
 .filter-open-btn {
-    background: #4CAF50;
+    background: #2196F3; /* Blue for "show only open" state */
     color: white;
     border: none;
     padding: 0.75rem 1rem;
@@ -155,12 +155,16 @@ main {
 }
 
 .filter-open-btn:hover {
-    background: #45a049;
+    background: #1976D2;
 }
 
 .filter-open-btn.active {
-    background: #2E7D32;
-    transform: scale(0.98);
+    background: #FF9800; /* Orange for "show all" state when filtering is active */
+    color: white;
+}
+
+.filter-open-btn.active:hover {
+    background: #F57C00;
 }
 
 .button-row {

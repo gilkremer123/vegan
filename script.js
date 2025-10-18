@@ -57,7 +57,9 @@ const translations = {
     openingHours: 'שעות פתיחה',
     openNow: 'פתוח עכשיו',
     closedNow: 'סגור עכשיו',
-    filterOpenNow: 'פתוח עכשיו'
+    filterOpenNow: 'פתוח עכשיו',
+    showOnlyOpen: 'פתוח עכשיו',
+    showAllPlaces: 'הצג הכל'
     },
     en: {
         title: 'Vegan Places in Israel',
@@ -92,7 +94,9 @@ const translations = {
         openingHours: 'Hours',
         openNow: 'Open now',
         closedNow: 'Closed now',
-        filterOpenNow: 'Open now'
+        filterOpenNow: 'Open now',
+        showOnlyOpen: 'Only open now',
+        showAllPlaces: 'Show all'
     }
 };
 
@@ -363,8 +367,20 @@ function updateLanguage() {
     // Update toggle all button text
     toggleAllBtn.textContent = allExpanded ? t.collapseAll : t.expandAll;
     
+    // Update filter button text based on current state
+    if (filterOpenBtn) {
+        if (filterOpenOnly) {
+            filterOpenBtn.textContent = t.showAllPlaces;
+        } else {
+            filterOpenBtn.textContent = t.showOnlyOpen;
+        }
+    }
+    
     // Update elements with data-key attributes
     document.querySelectorAll('[data-key]').forEach(element => {
+        // Skip filter button as it has custom text logic
+        if (element === filterOpenBtn) return;
+        
         const key = element.getAttribute('data-key');
         if (t[key]) {
             // Special handling for title to preserve logo
@@ -1006,7 +1022,18 @@ function getCondensedWeeklyLabel(schedule) {
 // Toggle open filter
 function toggleOpenFilter() {
     filterOpenOnly = !filterOpenOnly;
-    filterOpenBtn.classList.toggle('active', filterOpenOnly);
+    const t = translations[currentLanguage];
+    
+    if (filterOpenOnly) {
+        // Button is now active - showing only open places
+        filterOpenBtn.textContent = t.showAllPlaces;
+        filterOpenBtn.classList.add('active');
+    } else {
+        // Button is inactive - showing all places
+        filterOpenBtn.textContent = t.showOnlyOpen;
+        filterOpenBtn.classList.remove('active');
+    }
+    
     filterPlaces(); // Re-apply filtering
 }
 

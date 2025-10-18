@@ -113,6 +113,15 @@ let filterOpenOnly = false; // Track if filter is active
 
 // Initialize the application
 document.addEventListener('DOMContentLoaded', function() {
+    // Clear any cached service workers to prevent stale content
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(function(registrations) {
+            for(let registration of registrations) {
+                registration.unregister();
+            }
+        });
+    }
+    
     // Initialize EmailJS
     try {
         emailjs.init("ZS8tiM0rUEIcKH_3m");
@@ -139,6 +148,21 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Update open/closed status every minute
     setInterval(updateOpenClosedStatus, 60000);
+    
+    // Also refresh data every 5 minutes to catch new places or hour changes
+    setInterval(async function() {
+        console.log('🔄 Auto-refreshing places data...');
+        await loadPlaces();
+    }, 5 * 60 * 1000); // 5 minutes
+    
+    // Add keyboard shortcut for manual refresh (Ctrl+R or Cmd+R)
+    document.addEventListener('keydown', function(e) {
+        if ((e.ctrlKey || e.metaKey) && e.key === 'r') {
+            console.log('🔄 Manual refresh triggered...');
+            e.preventDefault();
+            loadPlaces();
+        }
+    });
 });
 
 // Function to update only the open/closed status without full re-render
@@ -498,7 +522,15 @@ async function loadPlaces() {
         const t = translations[currentLanguage];
         placesList.innerHTML = `<div class="loading">${t.loading}</div>`;
         
-        const response = await fetch('places.csv');
+        // Add cache-busting timestamp to ensure fresh data
+        const cacheBuster = new Date().getTime();
+        const response = await fetch(`places.csv?t=${cacheBuster}`, {
+            cache: 'no-store',
+            headers: {
+                'Cache-Control': 'no-cache, no-store, must-revalidate',
+                'Pragma': 'no-cache'
+            }
+        });
         if (!response.ok) {
             throw new Error('Failed to load places data');
         }

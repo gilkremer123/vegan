@@ -59,7 +59,8 @@ const translations = {
     closedNow: 'סגור עכשיו',
     filterOpenNow: 'פתוח עכשיו',
     showOnlyOpen: 'פתוח עכשיו',
-    showAllPlaces: 'הצג הכל'
+    showAllPlaces: 'הצג הכל',
+    footerRecommendedLink: 'אתר מומלץ להזמנת אוכל טבעוני ועוד מיצרנים ביתיים בעבודת יד'
     },
     en: {
         title: 'Vegan Places in Israel',
@@ -96,7 +97,8 @@ const translations = {
         closedNow: 'Closed now',
         filterOpenNow: 'Open now',
         showOnlyOpen: 'Only open now',
-        showAllPlaces: 'Show all'
+        showAllPlaces: 'Show all',
+        footerRecommendedLink: 'Recommended site for ordering vegan food and more from home producers'
     }
 };
 

@@ -1049,3 +1049,103 @@ footer {
 @media (max-width: 768px) {
     .subscribe-btn { font-size: 0.9rem; padding: 0.8rem 1.4rem; }
 }
+
+/* Footer Styles */
+footer {
+    background: linear-gradient(135deg, #2E7D32, #1B5E20);
+    color: white;
+    margin-top: 3rem;
+    padding: 2rem 0 1rem;
+}
+
+.footer-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 2rem;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 2rem;
+}
+
+.footer-section h3 {
+    color: #A5D6A7;
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    border-bottom: 2px solid #4CAF50;
+    padding-bottom: 0.5rem;
+}
+
+.footer-section p {
+    line-height: 1.6;
+    color: #E8F5E8;
+    margin-bottom: 0.5rem;
+}
+
+.recommended-links {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.recommended-link {
+    display: inline-block;
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    text-decoration: none;
+    padding: 1rem;
+    border-radius: 8px;
+    border-left: 4px solid #4CAF50;
+    transition: all 0.3s ease;
+    font-weight: 500;
+    line-height: 1.4;
+}
+
+.recommended-link:hover {
+    background: rgba(255, 255, 255, 0.2);
+    border-left-color: #81C784;
+    transform: translateX(5px);
+    text-decoration: none;
+    color: #A5D6A7;
+}
+
+[dir="rtl"] .recommended-link {
+    border-left: none;
+    border-right: 4px solid #4CAF50;
+}
+
+[dir="rtl"] .recommended-link:hover {
+    border-right-color: #81C784;
+    transform: translateX(-5px);
+}
+
+.footer-bottom {
+    background: rgba(0, 0, 0, 0.2);
+    text-align: center;
+    padding: 1rem 2rem;
+    margin-top: 2rem;
+    font-size: 0.9rem;
+    color: #C8E6C9;
+}
+
+/* Footer Responsive Design */
+@media (max-width: 768px) {
+    .footer-content {
+        grid-template-columns: 1fr;
+        padding: 0 1rem;
+        gap: 1.5rem;
+    }
+    
+    footer {
+        padding: 1.5rem 0 0.5rem;
+    }
+    
+    .footer-section h3 {
+        font-size: 1rem;
+    }
+    
+    .recommended-link {
+        padding: 0.8rem;
+        font-size: 0.9rem;
+    }
+}

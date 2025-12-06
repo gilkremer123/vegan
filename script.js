@@ -3,6 +3,7 @@ let places = [];
 let map;
 let baseLayer; // current base tile layer
 let markers = [];
+let userLocationMarker = null; // Track user location marker
 let currentLanguage = 'he'; // Default to Hebrew
 let allExpanded = false; // Track global expand/collapse state - start collapsed
 // Precise coordinate overrides (key: normalized address). Start with Tel Aviv sample entries.
@@ -60,7 +61,12 @@ const translations = {
     filterOpenNow: 'פתוח עכשיו',
     showOnlyOpen: 'פתוח עכשיו',
     showAllPlaces: 'הצג הכל',
-    footerRecommendedLink: 'אתר מומלץ להזמנת אוכל טבעוני ועוד מיצרנים ביתיים בעבודת יד'
+    footerRecommendedLink: 'אתר מומלץ להזמנת אוכל טבעוני ועוד מיצרנים ביתיים בעבודת יד',
+    showMyLocation: 'הצג מיקומי',
+    myLocation: 'המיקום שלי',
+    locationError: 'שגיאה בהשגת המיקום',
+    locationNotSupported: 'הדפדפן לא תומך בשירותי מיקום',
+    locationPermissionDenied: 'הגישה למיקום נדחתה'
     },
     en: {
         title: 'Vegan Places in Israel',
@@ -98,7 +104,12 @@ const translations = {
         filterOpenNow: 'Open now',
         showOnlyOpen: 'Only open now',
         showAllPlaces: 'Show all',
-        footerRecommendedLink: 'Recommended site for ordering vegan food and more from home producers'
+        footerRecommendedLink: 'Recommended site for ordering vegan food and more from home producers',
+        showMyLocation: 'Show my location',
+        myLocation: 'My Location',
+        locationError: 'Error getting location',
+        locationNotSupported: 'Browser does not support location services',
+        locationPermissionDenied: 'Location access denied'
     }
 };
 
@@ -114,6 +125,7 @@ const toggleAllBtn = document.getElementById('toggleAllBtn');
 const subscribeBtn = document.getElementById('subscribeBtn');
 const subscribeModal = document.getElementById('subscribeModal');
 const filterOpenBtn = document.getElementById('filterOpenBtn');
+const locationBtn = document.getElementById('locationBtn');
 let subscriptionSending = false;
 let filterOpenOnly = false; // Track if filter is active
 
@@ -212,6 +224,7 @@ function setupEventListeners() {
     toggleAllBtn.addEventListener('click', toggleAllCategories);
     if (subscribeBtn) subscribeBtn.addEventListener('click', openSubscribeModal);
     if (filterOpenBtn) filterOpenBtn.addEventListener('click', toggleOpenFilter);
+    if (locationBtn) locationBtn.addEventListener('click', handleLocationButtonClick);
     
     // Add event listener for email contact button in modal
     document.getElementById('emailContactBtn').addEventListener('click', openContactEmail);
@@ -1072,6 +1085,122 @@ function initializeMap() {
     setBaseLayer();
     // Add places to map
     addMarkersToMap();
+    // Try to get user location after map is initialized
+    requestUserLocation();
+}
+
+// Request user's current location
+function requestUserLocation() {
+    if (!navigator.geolocation) {
+        console.log('Geolocation not supported by browser');
+        return;
+    }
+
+    // Request location with high accuracy
+    navigator.geolocation.getCurrentPosition(
+        showUserLocation,
+        handleLocationError,
+        {
+            enableHighAccuracy: true,
+            timeout: 10000,
+            maximumAge: 300000 // 5 minutes
+        }
+    );
+}
+
+// Show user location on map
+function showUserLocation(position) {
+    const lat = position.coords.latitude;
+    const lng = position.coords.longitude;
+    const accuracy = position.coords.accuracy;
+    
+    const t = translations[currentLanguage];
+    
+    // Remove existing user location marker if it exists
+    if (userLocationMarker) {
+        map.removeLayer(userLocationMarker);
+    }
+    
+    // Create custom icon for user location (blue dot)
+    const userIcon = L.divIcon({
+        className: 'user-location-marker',
+        html: '<div class="user-location-dot"></div>',
+        iconSize: [20, 20],
+        iconAnchor: [10, 10]
+    });
+    
+    // Add user location marker
+    userLocationMarker = L.marker([lat, lng], { icon: userIcon })
+        .addTo(map)
+        .bindPopup(`<strong>${t.myLocation}</strong><br>דיוק: ${Math.round(accuracy)}מ`);
+    
+    // Add accuracy circle
+    L.circle([lat, lng], {
+        radius: accuracy,
+        color: '#4285F4',
+        fillColor: '#4285F4',
+        fillOpacity: 0.1,
+        weight: 1
+    }).addTo(map);
+    
+    // Remove loading state from button
+    if (locationBtn) {
+        locationBtn.classList.remove('loading');
+        locationBtn.disabled = false;
+    }
+    
+    console.log(`User location: ${lat}, ${lng} (accuracy: ${accuracy}m)`);
+}
+
+// Handle geolocation errors
+function handleLocationError(error) {
+    const t = translations[currentLanguage];
+    let message = t.locationError;
+    
+    switch(error.code) {
+        case error.PERMISSION_DENIED:
+            message = t.locationPermissionDenied;
+            console.log('Location permission denied');
+            break;
+        case error.POSITION_UNAVAILABLE:
+            message = t.locationError;
+            console.log('Location information unavailable');
+            break;
+        case error.TIMEOUT:
+            message = t.locationError;
+            console.log('Location request timeout');
+            break;
+        default:
+            message = t.locationError;
+            console.log('Unknown location error');
+            break;
+    }
+    
+    // Remove loading state from button
+    if (locationBtn) {
+        locationBtn.classList.remove('loading');
+        locationBtn.disabled = false;
+    }
+}
+
+// Handle location button click
+function handleLocationButtonClick() {
+    if (!locationBtn) return;
+    
+    // Add loading state
+    locationBtn.classList.add('loading');
+    locationBtn.disabled = true;
+    
+    // Request location
+    requestUserLocation();
+    
+    // Remove loading state after timeout if no response
+    setTimeout(() => {
+        if (locationBtn) {
+            locationBtn.classList.remove('loading');
+            locationBtn.disabled = false;
+        }
+    }, 10000);
 }
 
 // Choose a base tile layer depending on language (Hebrew prefers local names)
